@@ -1,56 +1,56 @@
 /* ═══════════════════════════════════════════════════════
-   AURA Coffee & Kitchen — POS System Database & Logic
+   AURA Coffee & Kitchen — POS Engine & LocalDB Connection
 ═══════════════════════════════════════════════════════ */
 "use strict";
 
-// GİRİŞ KULLANICILARI VE ŞIFRELERI
+// PERSONEL HESAPLARI VE ROL YETKİLERİ
 const STAFF_ACCOUNTS = {
   "Barista Efe": { pin: "1111", role: "barista" },
   "Barista Ayşe": { pin: "2222", role: "barista" },
   "Kasiyer Selin": { pin: "3333", role: "barista" },
-  "Müdür Kerem": { pin: "0000", role: "admin" } // Tüm sekmeleri görme yetkisi
+  "Müdür Kerem": { pin: "0000", role: "admin" }
 };
 
-// VARSAYILAN MENÜ DATA (Veritabanı boşsa çalışır)
+// SİSTEM İLK AÇILIŞ VARSAYILAN MENÜSÜ
 const INITIAL_MENU = {
   "Espresso Bazlı": [
-    { id:1,  emoji:"☕", name:"Espresso",       price:65,  desc:"Yoğun, saf espresso" },
-    { id:2,  emoji:"🖤", name:"Americano",      price:75,  desc:"Espresso + sıcak su" },
-    { id:3,  emoji:"🤍", name:"Cappuccino",     price:95,  desc:"Espresso + köpüklü süt" },
-    { id:4,  emoji:"🥛", name:"Latte",          price:100, desc:"Espresso + buharlanmış süt" }
+    { id: 1, emoji: "☕", name: "Espresso", price: 65, desc: "Yoğun, saf espresso" },
+    { id: 2, emoji: "🖤", name: "Americano", price: 75, desc: "Espresso + sıcak su" },
+    { id: 3, emoji: "🤍", name: "Cappuccino", price: 95, desc: "Espresso + köpüklü süt" },
+    { id: 4, emoji: "🥛", name: "Latte", price: 100, desc: "Espresso + buharlanmış süt" }
   ],
   "Soğuk Kahve": [
-    { id:10, emoji:"🧊", name:"Cold Brew",      price:115, desc:"18 saat demleme, yumuşak" },
-    { id:11, emoji:"🥤", name:"Iced Latte",     price:110, desc:"Espresso + soğuk süt + buz" }
+    { id: 10, emoji: "🧊", name: "Cold Brew", price: 115, desc: "18 saat soğuk demleme" },
+    { id: 11, emoji: "🥤", name: "Iced Latte", price: 110, desc: "Espresso, soğuk süt ve buz" }
   ],
   "Özel Tatlar": [
-    { id:17, emoji:"🧡", name:"Caramel Latte",  price:120, desc:"Tatlı karamel soslu latte" }
+    { id: 15, emoji: "🧡", name: "Caramel Macchiato", price: 120, desc: "Karamel soslu katmanlı lezzet" }
   ]
 };
 
-// VARSAYILAN MASA VERILERI
+// SİSTEM İLK AÇILIŞ VARSAYILAN MASALARI
 const INITIAL_TABLES = [
-  { id:"M1", num:1, zone:"Salon", status:"free", cart: {} },
-  { id:"M2", num:2, zone:"Salon", status:"free", cart: {} },
-  { id:"M3", num:3, zone:"Salon", status:"free", cart: {} },
-  { id:"M4", num:4, zone:"Salon", status:"free", cart: {} },
-  { id:"M5", num:5, zone:"Teras", status:"free", cart: {} },
-  { id:"M6", num:6, zone:"Teras", status:"free", cart: {} },
-  { id:"M7", num:7, zone:"Teras", status:"free", cart: {} },
-  { id:"M8", num:8, zone:"Lounge", status:"free", cart: {} }
+  { id: "M1", num: 1, zone: "Salon", status: "free", cart: {} },
+  { id: "M2", num: 2, zone: "Salon", status: "free", cart: {} },
+  { id: "M3", num: 3, zone: "Salon", status: "free", cart: {} },
+  { id: "M4", num: 4, zone: "Salon", status: "free", cart: {} },
+  { id: "M5", num: 5, zone: "Teras", status: "free", cart: {} },
+  { id: "M6", num: 6, zone: "Teras", status: "free", cart: {} },
+  { id: "M7", num: 7, zone: "Teras", status: "free", cart: {} },
+  { id: "M8", num: 8, zone: "Lounge", status: "free", cart: {} }
 ];
 
-// LOCAL DATABASE (LocalStorage wrapper)
+// LOCAL STORAGE VERİTABANI BAĞLANTISI (LOCALDB)
 const DB = {
-  getMenu: () => JSON.parse(localStorage.getItem("aura_menu")) || INITIAL_MENU,
-  setMenu: (menu) => localStorage.setItem("aura_menu", JSON.stringify(menu)),
-  getTables: () => JSON.parse(localStorage.getItem("aura_tables")) || INITIAL_TABLES,
-  setTables: (tables) => localStorage.setItem("aura_tables", JSON.stringify(tables)),
-  getSales: () => JSON.parse(localStorage.getItem("aura_sales")) || [],
-  setSales: (sales) => localStorage.setItem("aura_sales", JSON.stringify(sales))
+  getMenu: () => JSON.parse(localStorage.getItem("aura_db_menu")) || INITIAL_MENU,
+  setMenu: (menu) => localStorage.setItem("aura_db_menu", JSON.stringify(menu)),
+  getTables: () => JSON.parse(localStorage.getItem("aura_db_tables")) || INITIAL_TABLES,
+  setTables: (tables) => localStorage.setItem("aura_db_tables", JSON.stringify(tables)),
+  getSales: () => JSON.parse(localStorage.getItem("aura_db_sales")) || [],
+  setSales: (sales) => localStorage.setItem("aura_db_sales", JSON.stringify(sales))
 };
 
-// GLOBAL APP STATE
+// UYGULAMA DURUM YÖNETİCİSİ (STATE)
 const state = {
   currentStaff: null,
   activeView: "pos",
@@ -61,7 +61,7 @@ const state = {
   searchQuery: ""
 };
 
-// INITIALIZE APP
+// BAŞLANGIÇ AYARLARI
 window.addEventListener("DOMContentLoaded", () => {
   updateClock();
   setInterval(updateClock, 1000);
@@ -69,44 +69,45 @@ window.addEventListener("DOMContentLoaded", () => {
 
 function updateClock() {
   const now = new Date();
-  if(document.getElementById("topbarTime")) document.getElementById("topbarTime").textContent = now.toLocaleTimeString("tr-TR", { hour:"2-digit", minute:"2-digit" });
-  if(document.getElementById("topbarMeta")) document.getElementById("topbarMeta").textContent = now.toLocaleDateString("tr-TR", { weekday:"long", day:"numeric", month:"long" });
+  if (document.getElementById("topbarTime")) document.getElementById("topbarTime").textContent = now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  if (document.getElementById("topbarMeta")) document.getElementById("topbarMeta").textContent = now.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
 }
 
-// PIN BAŞARILI GİRİŞ SİSTEMİ VE YETKİLENDİRME
+// GÜVENLİ GİRİŞ VE ROL KONTROLÜ
 function loginWithPin() {
   const selectedName = document.getElementById("staffSelect").value;
   const enteredPin = document.getElementById("staffPin").value;
-  const user = STAFF_ACCOUNTS[selectedName];
+  const account = STAFF_ACCOUNTS[selectedName];
 
-  if (user && user.pin === enteredPin) {
-    state.currentStaff = { name: selectedName, role: user.role };
-    
-    // UI Güncelleme
+  if (account && account.pin === enteredPin) {
+    state.currentStaff = { name: selectedName, role: account.role };
+
+    // Kullanıcı bilgilerini sol karta yazdır
     document.getElementById("staffName").textContent = selectedName;
-    document.getElementById("staffRole").textContent = user.role === "admin" ? "Müdür / Admin" : "Barista";
-    document.getElementById("staffAvatar").textContent = selectedName.charAt(8) || selectedName.charAt(0);
-    
-    // YETKİLENDİRME GÖRÜNÜRLÜĞÜ (Barista kısıtlama)
-    if (user.role === "barista") {
+    document.getElementById("staffRole").textContent = account.role === "admin" ? "Müdür / Yönetici" : "Barista Personeli";
+    document.getElementById("staffAvatar").textContent = selectedName.split(" ")[1] ? selectedName.split(" ")[1].charAt(0) : selectedName.charAt(0);
+
+    // YETKİ KONTROLÜ (Baristalar menü düzenleme ve raporları göremez)
+    if (account.role === "barista") {
       document.getElementById("nav-reports").style.display = "none";
-      document.getElementById("nav-menu").style.display = "none";
+      document.getElementById("nav-menu-manage").style.display = "none";
     } else {
       document.getElementById("nav-reports").style.display = "flex";
-      document.getElementById("nav-menu").style.display = "flex";
+      document.getElementById("nav-menu-manage").style.display = "flex";
     }
 
+    // Ekranı Aç
     document.getElementById("lockScreen").style.display = "none";
     document.getElementById("app").style.display = "flex";
     document.getElementById("staffPin").value = "";
 
-    // İlk görünümleri yükle
+    // Modülleri Yükle
     buildCategoryTabs();
     renderProducts();
     renderTables();
-    showToast(`Hoş geldiniz, ${selectedName}`);
+    showToast(`Giriş Başarılı: ${selectedName}`);
   } else {
-    alert("Hatalı PIN kodu girdiniz! Lütfen tekrar deneyin.");
+    alert("Hatalı PIN Girdiniz! Lütfen tekrar deneyin.");
     document.getElementById("staffPin").value = "";
   }
 }
@@ -117,13 +118,13 @@ function lockApp() {
   document.getElementById("app").style.display = "none";
 }
 
-// GÖRÜNÜM DEĞİŞTİRME
-function switchView(viewId, btn) {
+// SAYFA / SEKME DEĞİŞTİRME SİSTEMİ
+function switchView(viewId, btnElement) {
   document.querySelectorAll(".view").forEach(v => v.style.display = "none");
-  document.querySelectorAll(".nav-btn").forEach(b => b.classList.remove("active"));
-  
+  document.querySelectorAll(".sidebar-nav .nav-btn").forEach(b => b.classList.remove("active"));
+
   document.getElementById("view-" + viewId).style.display = "flex";
-  if (btn) btn.classList.add("active");
+  if (btnElement) btnElement.classList.add("active");
   state.activeView = viewId;
 
   if (viewId === "tables") renderTables();
@@ -136,10 +137,10 @@ function buildCategoryTabs() {
   const menu = DB.getMenu();
   const container = document.getElementById("catTabs");
   container.innerHTML = "";
-  
+
   Object.keys(menu).forEach(cat => {
     const btn = document.createElement("button");
-    btn.className = "cat-tab" + (state.activeCat === cat ? " active" : "");
+    btn.className = "category-tab" + (state.activeCat === cat ? " active" : "");
     btn.innerText = cat;
     btn.onclick = () => {
       state.activeCat = cat;
@@ -150,7 +151,7 @@ function buildCategoryTabs() {
   });
 }
 
-// SİPARİŞ EKRANINDA ÜRÜNLERİ LİSTELEME
+// SİPARİŞ EKRANINDAKİ ÜRÜN KARTLARI
 function renderProducts() {
   const grid = document.getElementById("productGrid");
   grid.innerHTML = "";
@@ -165,10 +166,12 @@ function renderProducts() {
     const card = document.createElement("div");
     card.className = "product-card";
     card.innerHTML = `
-      <div class="card-top-row"><span class="product-emoji">${p.emoji}</span></div>
-      <div class="product-name">${p.name}</div>
-      <div class="product-desc">${p.desc || ""}</div>
-      <div class="card-footer"><span class="product-price">${p.price} TL</span></div>
+      <div class="product-emoji">${p.emoji}</div>
+      <div class="product-info">
+        <h3 class="product-name">${p.name}</h3>
+        <p class="product-desc">${p.desc || ""}</p>
+        <div class="product-price">${p.price} TL</div>
+      </div>
     `;
     card.onclick = () => addProductToCart(p);
     grid.appendChild(card);
@@ -180,7 +183,7 @@ function filterProducts(val) {
   renderProducts();
 }
 
-// MASALAR SEKMESİ VE MASALARIN ALTINDAKİ AKTİF SİPARİŞLER
+// MASALAR VE ALTLARINDAKİ SİPARİŞ DETAYLARI
 function renderTables() {
   const grid = document.getElementById("tablesGrid");
   grid.innerHTML = "";
@@ -188,35 +191,38 @@ function renderTables() {
 
   tables.forEach(t => {
     const card = document.createElement("div");
-    card.className = "product-card";
     
-    // Sipariş kalemlerinin metin haline getirilmesi
-    let itemsSummary = "";
-    let subTotal = 0;
+    // Masa sipariş özeti çıkarma hesabı
+    let ordersListHTML = "";
+    let totalAdisyon = 0;
     Object.values(t.cart).forEach(item => {
-      itemsSummary += `<div>• ${item.name} x${item.qty}</div>`;
-      subTotal += item.price * item.qty;
+      ordersListHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:2px;">
+        <span>• ${item.name} (x${item.qty})</span>
+        <span>${item.price * item.qty} TL</span>
+      </div>`;
+      totalAdisyon += item.price * item.qty;
     });
 
-    if(subTotal > 0) {
+    const isOccupied = totalAdisyon > 0;
+    card.className = "product-card" + (isOccupied ? " popular" : "");
+    if(isOccupied) {
       card.style.borderColor = "var(--accent)";
-      t.status = "occupied";
-    } else {
-      t.status = "free";
     }
 
     card.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-        <strong style="font-size:16px; color:var(--text)">Masa ${t.num}</strong>
-        <span style="font-size:11px; padding:2px 6px; border-radius:4px; background:${subTotal > 0 ? 'var(--accent-bg)':'#222'}; color:${subTotal > 0 ? 'var(--accent)':'#888'}">
-          ${subTotal > 0 ? subTotal + ' TL' : 'Boş'}
-        </span>
-      </div>
-      <div style="font-size:11px; color:var(--text2); min-height:40px; max-height:80px; overflow:hidden;">
-        ${itemsSummary || '<span style="color:var(--text3)">Sipariş yok</span>'}
+      <div class="product-info" style="width:100%">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--bg4); padding-bottom:8px; margin-bottom:8px;">
+          <h3 class="product-name" style="font-size:16px; color:var(--text)">Masa ${t.num} <span style="font-size:11px; color:var(--text3)">(${t.zone})</span></h3>
+          <span style="font-size:12px; font-weight:700; color:${isOccupied ? 'var(--accent)' : 'var(--text3)'}">
+            ${isOccupied ? totalAdisyon + ' TL' : 'BOŞ'}
+          </span>
+        </div>
+        <div style="font-size:11px; color:var(--text2); min-height:45px; max-height:90px; overflow-y:auto; font-family:'DM Sans'; line-height:1.4;">
+          ${ordersListHTML || '<span style="color:var(--text3); dotted">Sipariş Kaydı Bulunmuyor</span>'}
+        </div>
       </div>
     `;
-    
+
     card.onclick = () => {
       state.activeTableId = t.id;
       switchView("pos", document.getElementById("nav-pos"));
@@ -226,10 +232,10 @@ function renderTables() {
   });
 }
 
-// ÜRÜNE TIKLAYINCA SEPETE / MASAYA EKLEME YAPMA
+// ÜRÜNE TIKLANINCA ADİSYONA EKLEME
 function addProductToCart(product) {
   if (!state.activeTableId) {
-    alert("Lütfen önce Masalar sekmesinden veya üst menüden bir masa seçiniz!");
+    alert("Lütfen önce Masalar sekmesinden bir masa seçimi yapın!");
     switchView("tables", document.getElementById("nav-tables"));
     return;
   }
@@ -246,15 +252,16 @@ function addProductToCart(product) {
   table.status = "occupied";
   DB.setTables(tables);
   updateCartUI();
-  showToast(`${product.name} Masaya Eklendi`);
+  showToast(`${product.name} adisyona eklendi.`);
 }
 
-// ADİSYON PANELİNİ (Masa Sepetini) YENİLEME
+// SAĞ TARAF SEPET / ADİSYON GÖRÜNÜMÜNÜ GÜNCELLEME
 function updateCartUI() {
   const container = document.getElementById("cartItems");
   if (!state.activeTableId) {
     document.getElementById("cartTitle").innerText = "Masa Seçilmedi";
-    container.innerHTML = '<div class="empty-cart-state">İşlem yapmak için masa seçin.</div>';
+    document.getElementById("activeTableLabel").innerText = "Masa Seçilmedi";
+    container.innerHTML = '<div class="empty-state"><p>İşlem yapmak için masa seçin.</p></div>';
     return;
   }
 
@@ -265,43 +272,43 @@ function updateCartUI() {
 
   container.innerHTML = "";
   let subTotal = 0;
-  let count = 0;
+  let totalItemsCount = 0;
 
   Object.values(table.cart).forEach(item => {
-    count += item.qty;
+    totalItemsCount += item.qty;
     subTotal += item.price * item.qty;
 
-    const row = document.createElement("div");
-    row.style = "display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #1e1e1e;";
-    row.innerHTML = `
-      <div>
-        <div style="font-weight:500;">${item.name}</div>
-        <div style="font-size:11px; color:var(--text3);">${item.price} TL</div>
+    const div = document.createElement("div");
+    div.className = "receipt-item";
+    div.innerHTML = `
+      <div class="item-meta">
+        <span class="item-name">${item.name}</span>
+        <span class="item-price">${(item.price * item.qty).toFixed(2)} TL</span>
       </div>
-      <div style="display:flex; align-items:center; gap:10px;">
-        <button class="search-clear" onclick="changeQty(${item.id}, -1)"><i class="fa-solid fa-minus"></i></button>
-        <strong>${item.qty}</strong>
-        <button class="search-clear" onclick="changeQty(${item.id}, 1)"><i class="fa-solid fa-plus"></i></button>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <button class="search-clear" style="padding:2px 6px;" onclick="changeQty(${item.id}, -1)"><i class="fa-solid fa-minus" style="font-size:10px;"></i></button>
+        <span style="font-weight:600; font-size:14px; min-width:15px; text-align:center;">${item.qty}</span>
+        <button class="search-clear" style="padding:2px 6px;" onclick="changeQty(${item.id}, 1)"><i class="fa-solid fa-plus" style="font-size:10px;"></i></button>
       </div>
     `;
-    container.appendChild(row);
+    container.appendChild(div);
   });
 
-  if (count === 0) {
-    container.innerHTML = '<div class="empty-cart-state">Adisyon boş. Ürün ekleyin.</div>';
+  if (totalItemsCount === 0) {
+    container.innerHTML = '<div class="empty-state"><p>Masa adisyonu şu an boş.</p></div>';
   }
 
   const discountAmount = subTotal * (state.discount / 100);
   const grandTotal = subTotal - discountAmount;
 
-  document.getElementById("cartCount").innerText = `${count} Ürün`;
+  document.getElementById("cartCount").innerText = `${totalItemsCount} adet ürün listeleniyor`;
   document.getElementById("subTotal").innerText = `${subTotal.toFixed(2)} TL`;
   document.getElementById("discountTotal").innerText = `${discountAmount.toFixed(2)} TL (%${state.discount})`;
   document.getElementById("grandTotal").innerText = `${grandTotal.toFixed(2)} TL`;
 
-  // Aktif Ödeme Metodu Stil Güncellemesi
-  document.getElementById("pay-Kart").style.borderColor = state.payMethod === "Kart" ? "var(--accent)" : "transparent";
-  document.getElementById("pay-Nakit").style.borderColor = state.payMethod === "Nakit" ? "var(--accent)" : "transparent";
+  // Buton aktiflik çerçeveleri
+  document.getElementById("pay-Kart").style.borderColor = state.payMethod === "Kart" ? "var(--accent)" : "var(--border2)";
+  document.getElementById("pay-Nakit").style.borderColor = state.payMethod === "Nakit" ? "var(--accent)" : "var(--border2)";
 }
 
 function changeQty(productId, amount) {
@@ -318,20 +325,33 @@ function changeQty(productId, amount) {
   updateCartUI();
 }
 
+function clearActiveCart() {
+  if (!state.activeTableId) return;
+  if (confirm("Bu masanın tüm siparişlerini silmek istediğinize emin misiniz?")) {
+    const tables = DB.getTables();
+    const table = tables.find(t => t.id === state.activeTableId);
+    table.cart = {};
+    table.status = "free";
+    DB.setTables(tables);
+    updateCartUI();
+    showToast("Masa adisyonu temizlendi.");
+  }
+}
+
 function setPaymentMethod(method) {
   state.payMethod = method;
   updateCartUI();
 }
 
 function applyDiscountPrompt() {
-  const rate = prompt("İndirim yüzdesi giriniz (Örn: 10):", state.discount);
+  const rate = prompt("Uygulanacak indirim yüzdesini girin (Sadece sayı, Örn: 15):", state.discount);
   if (rate !== null) {
     state.discount = parseFloat(rate) || 0;
     updateCartUI();
   }
 }
 
-// HESAP ALMA / HESABI KAPATMA SİSTEMİ
+// MÜŞTERİDEN HESAP ALMA / CİROYA KAYDETME
 function checkoutOrder() {
   if (!state.activeTableId) return;
   const tables = DB.getTables();
@@ -341,14 +361,14 @@ function checkoutOrder() {
   Object.values(table.cart).forEach(i => subTotal += i.price * i.qty);
 
   if (subTotal === 0) {
-    alert("Boş adisyon kapatılamaz!");
+    alert("İçerisinde ürün bulunmayan adisyon tahsil edilemez.");
     return;
   }
 
   const discountAmount = subTotal * (state.discount / 100);
   const finalTotal = subTotal - discountAmount;
 
-  // Satış Kaydı (Raporlar için veritabanına ekleme)
+  // Satış Detayını Veritabanına Yazma
   const sales = DB.getSales();
   sales.push({
     id: Date.now(),
@@ -357,21 +377,21 @@ function checkoutOrder() {
     date: new Date().toISOString(),
     staff: state.currentStaff.name,
     method: state.payMethod,
-    items: Object.values(table.cart).map(i => `${i.name} x${i.qty}`)
+    items: Object.values(table.cart).map(i => `${i.name} (x${i.qty})`)
   });
   DB.setSales(sales);
 
-  // Masayı boşalt ve sıfırla
+  // Masayı Tamamen Boşalt
   table.cart = {};
   table.status = "free";
   DB.setTables(tables);
 
   state.discount = 0;
   updateCartUI();
-  showToast("Hesap başarıyla tahsil edildi ve kapatıldı!");
+  showToast(`Masa ${table.num} hesabı alındı. Adisyon kapatıldı.`);
 }
 
-// MENÜ YÖNETİMİ (Ürün Listeleme, Silme)
+// MENÜ YÖNETİM PANELİ (LİSTELEME VE SİLME)
 function renderMenuManage() {
   const grid = document.getElementById("menuManageGrid");
   grid.innerHTML = "";
@@ -383,15 +403,15 @@ function renderMenuManage() {
       card.className = "product-card";
       card.style.cursor = "default";
       card.innerHTML = `
-        <div style="display:flex; justify-content:space-between;">
-          <span class="product-emoji">${p.emoji}</span>
-          <span class="topbar-meta">${cat}</span>
-        </div>
-        <div class="product-name" style="margin-top:8px;">${p.name}</div>
-        <div class="product-price">${p.price} TL</div>
-        <div style="display:flex; gap:8px; margin-top:10px;">
-          <button class="modal-btn secondary" style="padding:4px 8px; font-size:11px;" onclick="editProductBtn('${cat}', ${p.id})">Düzenle</button>
-          <button class="modal-btn secondary" style="padding:4px 8px; font-size:11px; background:#e0557522; color:var(--red);" onclick="deleteProduct('${cat}', ${p.id})">Sil</button>
+        <div class="product-emoji">${p.emoji}</div>
+        <div class="product-info" style="width:100%;">
+          <span style="font-size:10px; text-transform:uppercase; color:var(--accent); letter-spacing:1px;">${cat}</span>
+          <h3 class="product-name" style="margin:4px 0;">${p.name}</h3>
+          <div class="product-price" style="margin-bottom:12px;">${p.price} TL</div>
+          <div style="display:flex; gap:6px;">
+            <button class="modal-btn secondary" style="padding:4px 10px; font-size:11px; flex:1; justify-content:center;" onclick="editProductBtn('${cat}', ${p.id})">Düzenle</button>
+            <button class="modal-btn secondary" style="padding:4px 10px; font-size:11px; flex:1; justify-content:center; color:var(--red); border-color:#3a1a22" onclick="deleteProduct('${cat}', ${p.id})">Kaldır</button>
+          </div>
         </div>
       `;
       grid.appendChild(card);
@@ -399,9 +419,9 @@ function renderMenuManage() {
   });
 }
 
-// ÜRÜN EKLEME / DÜZENLEME MODAL İŞLEMLERİ
+// YENİ ÜRÜN VE DÜZENLEME İŞLEMLERİ
 function openAddProductModal() {
-  document.getElementById("modalTitle").innerText = "Yeni Ürün Ekle";
+  document.getElementById("modalTitle").innerText = "Yeni Menü Ürünü Ekle";
   document.getElementById("editProductId").value = "";
   document.getElementById("prodEmoji").value = "☕";
   document.getElementById("prodName").value = "";
@@ -411,7 +431,7 @@ function openAddProductModal() {
 }
 
 function editProductBtn(cat, id) {
-  document.getElementById("modalTitle").innerText = "Ürünü Düzenle";
+  document.getElementById("modalTitle").innerText = "Ürün Bilgilerini Düzenle";
   const menu = DB.getMenu();
   const prod = menu[cat].find(p => p.id === id);
   
@@ -433,25 +453,20 @@ function saveProduct() {
   const desc = document.getElementById("prodDesc").value;
 
   if (!name || price <= 0) {
-    alert("Lütfen geçerli isim ve fiyat giriniz!");
+    alert("Geçerli bir ürün ismi ve satış fiyatı belirtmelisiniz!");
     return;
   }
 
   const menu = DB.getMenu();
 
   if (editIdVal) {
-    // Düzenleme İşlemi
     const [oldCat, oldId] = editIdVal.split("||");
-    // Eski kategoriden çıkar
     menu[oldCat] = menu[oldCat].filter(p => p.id != oldId);
-    // Yenisine veya eskiye ekle
     if (!menu[cat]) menu[cat] = [];
     menu[cat].push({ id: parseInt(oldId), emoji, name, price, desc });
   } else {
-    // Yeni Ürün Ekleme İşlemi
     if (!menu[cat]) menu[cat] = [];
-    const newId = Date.now();
-    menu[cat].push({ id: newId, emoji, name, price, desc });
+    menu[cat].push({ id: Date.now(), emoji, name, price, desc });
   }
 
   DB.setMenu(menu);
@@ -459,83 +474,25 @@ function saveProduct() {
   renderMenuManage();
   buildCategoryTabs();
   renderProducts();
-  showToast("Ürün Başarıyla Kaydedildi");
+  showToast("Menü veritabanı başarıyla güncellendi.");
 }
 
 function deleteProduct(cat, id) {
-  if (confirm("Bu ürünü silmek istediğinize emin misiniz?")) {
+  if (confirm("Bu ürünü menüden kalıcı olarak kaldırmak istediğinize emin misiniz?")) {
     const menu = DB.getMenu();
     menu[cat] = menu[cat].filter(p => p.id !== id);
     DB.setMenu(menu);
     renderMenuManage();
     buildCategoryTabs();
     renderProducts();
-    showToast("Ürün silindi");
+    showToast("Ürün menüden kaldırıldı.");
   }
 }
 
-// ADMIN GÜNLÜK - HAFTALIK RAPORLARI HESAPLAMA
+// CİRO VE YÖNETİCİ RAPORLARI MODÜLÜ
 function renderReports() {
   const sales = DB.getSales();
   let dailyTotal = 0;
   let weeklyTotal = 0;
   
-  const oneDay = 24 * 60 * 60 * 1000;
-  const now = new Date();
-
-  sales.forEach(s => {
-    const saleDate = new Date(s.date);
-    const diffTime = Math.abs(now - saleDate);
-    
-    if (diffTime <= oneDay) dailyTotal += s.total;
-    if (diffTime <= (oneDay * 7)) weeklyTotal += s.total;
-  });
-
-  document.getElementById("reportDailyRevenue").innerText = `${dailyTotal.toFixed(2)} TL`;
-  document.getElementById("reportWeeklyRevenue").innerText = `${weeklyTotal.toFixed(2)} TL`;
-  document.getElementById("reportTotalOrders").innerText = sales.length;
-
-  // Geçmiş listesi
-  const historyContainer = document.getElementById("reportOrderHistory");
-  historyContainer.innerHTML = "";
-  
-  sales.slice(-5).reverse().forEach(s => {
-    const d = new Date(s.date).toLocaleTimeString("tr-TR", {hour: '2-digit', minute:'2-digit'});
-    const div = document.createElement("div");
-    div.style = "background:var(--bg3); padding:10px; border-radius:8px; display:flex; justify-content:between; align-items:center;";
-    div.innerHTML = `
-      <div style="flex:1;">
-        <strong>Masa ${s.tableNum}</strong> - <span style="color:var(--text3)">${d} (${s.staff})</span>
-        <div style="font-size:11px; color:var(--text2)">${s.items.join(", ")}</div>
-      </div>
-      <strong style="color:var(--accent); text-align:right;">${s.total.toFixed(2)} TL [${s.method}]</strong>
-    `;
-    historyContainer.appendChild(div);
-  });
-}
-
-// MODAL YARDIMCILARI
-function openModal(id) {
-  document.getElementById(id).style.display = "flex";
-  setTimeout(() => {
-    document.getElementById(id).querySelector(".modal-card").style.transform = "translateY(0)";
-  }, 50);
-}
-function closeModal(id) {
-  document.getElementById(id).querySelector(".modal-card").style.transform = "translateY(100px)";
-  setTimeout(() => {
-    document.getElementById(id).style.display = "none";
-  }, 200);
-}
-
-// TOAST MESAJ SİSTEMİ
-function showToast(msg) {
-  const toast = document.getElementById("toast");
-  document.getElementById("toastMsg").innerText = msg;
-  toast.style.display = "block";
-  toast.style.transform = "translateX(-50%) translateY(0)";
-  setTimeout(() => {
-    toast.style.transform = "translateX(-50%) translateY(100px)";
-    setTimeout(() => { toast.style.display = "none"; }, 300);
-  }, 2000);
-}
+  const birGunMs = 24 * 60 * 60 * 1000
