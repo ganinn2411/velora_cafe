@@ -233,3 +233,17 @@ const SettingsDB = {
   save(s)     { DB.set(DB_KEYS.SETTINGS, s); },
   getTaxRate(){ return this.get().taxRate || 8; },
 };
+// SETTINGS DB INTERFACE
+const SettingsDB = {
+  get() {
+    // Eğer daha önce kaydedilmiş ayar yoksa varsayılan değerleri getirir
+    return DB.get(DB_KEYS.SETTINGS) || {
+      kdv: 20,
+      service: 0,
+      footerText: "Bizi tercih ettiğiniz için teşekkür ederiz."
+    };
+  },
+  save(settings) {
+    DB.set(DB_KEYS.SETTINGS, settings);
+  }
+};
