@@ -1,11 +1,10 @@
 /* ═══════════════════════════════════════════════════════
-   AURA Coffee & Kitchen — FULL SCRIPT.JS
-   Firebase Bulut Senkronizasyonlu & Gelişmiş Ayarlar Entegreli
+   AURA Coffee & Kitchen — SCRIPT.JS
+   Firebase Senkronizasyonlu & Dinamik Hesaplamalı
 ═══════════════════════════════════════════════════════ */
 
 "use strict";
 
-/* ── APP STATE (UYGULAMA DURUMU) ── */
 const state = {
   currentUser:   null,
   activeView:    "pos",
@@ -22,9 +21,7 @@ const state = {
   reportMode:    "daily",
 };
 
-/* ── BAŞLANGIÇ VE FIREBASE BAĞLANTISI ── */
 window.addEventListener("DOMContentLoaded", () => {
-  // YÜKLENİYOR EKRANI GÖSTER
   const lockStaffGrid = document.getElementById("lockStaffGrid");
   document.getElementById("lockStaffSection").style.display = "block";
   document.getElementById("lockPinSection").style.display = "none";
@@ -32,7 +29,6 @@ window.addEventListener("DOMContentLoaded", () => {
     lockStaffGrid.innerHTML = `<h3 style="color:var(--accent); text-align:center; padding:30px; width: 100%;">Sunucuya Bağlanılıyor...<br><span style="font-size:12px; color:var(--text3);">Veriler Eşitleniyor, Lütfen Bekleyin</span></h3>`;
   }
 
-  // FIREBASE'DEN VERİLERİ ÇEK (db.js içindeki startFirebaseSync)
   if(typeof startFirebaseSync === "function") {
     startFirebaseSync(() => {
       updateClock();
@@ -45,15 +41,9 @@ window.addEventListener("DOMContentLoaded", () => {
         renderLockScreen();
       }
     });
-  } else {
-    // Firebase yoksa yerel çalış
-    updateClock();
-    setInterval(updateClock, 1000);
-    renderLockScreen();
   }
 });
 
-// BAŞKA BİR CİHAZ İŞLEM YAPTIĞINDA EKRANI CANLI YENİLE
 window.refreshUI = function() {
   if (state.activeView === "pos") {
       if (state.activeTable) {
@@ -65,15 +55,10 @@ window.refreshUI = function() {
                order.items.forEach(item => { 
                  state.cart[item.productId] = { product: { id: item.productId, name: item.name, price: item.price }, qty: item.qty }; 
                });
-            } else {
-               state.cart = {};
-            }
-         } else {
-             state.cart = {};
-         }
+            } else { state.cart = {}; }
+         } else { state.cart = {}; }
       }
       renderCart();
-      renderTablesView();
   }
   if (state.activeView === "tables") renderTablesView();
   if (state.activeView === "reports") renderReportsView();
@@ -83,15 +68,10 @@ window.refreshUI = function() {
 
 function updateClock() {
   const now = new Date();
-  document.querySelectorAll(".js-clock").forEach(el => {
-    el.textContent = now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
-  });
-  document.querySelectorAll(".js-date").forEach(el => {
-    el.textContent = now.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" });
-  });
+  document.querySelectorAll(".js-clock").forEach(el => el.textContent = now.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" }));
+  document.querySelectorAll(".js-date").forEach(el => el.textContent = now.toLocaleDateString("tr-TR", { weekday: "long", day: "numeric", month: "long" }));
 }
 
-/* ── KİLİT EKRANI & PIN GİRİŞİ ── */
 function renderLockScreen() {
   state.currentUser = null;
   state.pinInput = "";
@@ -103,7 +83,6 @@ function renderLockScreen() {
   document.getElementById("lockPinSection").style.display = "none";
 
   const staffGrid = document.getElementById("lockStaffGrid");
-  if (!staffGrid) return;
   staffGrid.innerHTML = "";
 
   const users = UserDB.getAll();
@@ -157,11 +136,8 @@ function clearPin() {
 function updatePinDots() {
   const dots = document.querySelectorAll(".pin-dot");
   dots.forEach((dot, idx) => {
-    if (idx < state.pinInput.length) {
-      dot.classList.add("active");
-    } else {
-      dot.classList.remove("active");
-    }
+    if (idx < state.pinInput.length) dot.classList.add("active");
+    else dot.classList.remove("active");
   });
 }
 
@@ -179,7 +155,6 @@ function loginUser(user, saveSession) {
   state.currentUser = user;
   if (saveSession) SessionDB.setUser(user);
 
-  // Rol Yetkilendirmesi (Barista vs Admin)
   const navReports = document.getElementById("nav-reports");
   const navMenu = document.getElementById("nav-menu");
   const navSettings = document.getElementById("nav-settings");
@@ -196,7 +171,6 @@ function loginUser(user, saveSession) {
 
   const avatarEl = document.querySelector(".staff-pill-avatar");
   const nameEl = document.querySelector(".staff-pill-name");
-  
   if (avatarEl) avatarEl.textContent = user.avatar;
   if (nameEl) nameEl.textContent = user.name;
 
@@ -208,11 +182,8 @@ function loginUser(user, saveSession) {
   showToast(`Hoş geldiniz, ${user.name}`);
 }
 
-function logout() {
-  renderLockScreen();
-}
+function logout() { renderLockScreen(); }
 
-/* ── GÖRÜNÜM (SEKME) YÖNETİMİ ── */
 function switchView(viewId) {
   state.activeView = viewId;
   document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
@@ -220,7 +191,6 @@ function switchView(viewId) {
 
   const targetView = document.getElementById(`view-${viewId}`);
   const targetBtn = document.getElementById(`nav-${viewId}`);
-  
   if (targetView) targetView.classList.add("active");
   if (targetBtn) targetBtn.classList.add("active");
 
@@ -231,12 +201,9 @@ function switchView(viewId) {
   if (viewId === "settings") renderSettingsView();
 }
 
-/* ── POS EKRANI & ADİSYON SİSTEMİ ── */
 function initPOSView() {
   const categories = MenuDB.getCategories();
-  if (!state.activeCat && categories.length > 0) {
-    state.activeCat = categories[0];
-  }
+  if (!state.activeCat && categories.length > 0) state.activeCat = categories[0];
   renderCategoryTabs();
   renderProductsGrid();
   renderCart();
@@ -252,11 +219,7 @@ function renderCategoryTabs() {
     const btn = document.createElement("button");
     btn.className = `category-tab ${state.activeCat === cat ? "active" : ""}`;
     btn.textContent = cat;
-    btn.onclick = () => {
-      state.activeCat = cat;
-      renderCategoryTabs();
-      renderProductsGrid();
-    };
+    btn.onclick = () => { state.activeCat = cat; renderCategoryTabs(); renderProductsGrid(); };
     container.appendChild(btn);
   });
 }
@@ -267,9 +230,7 @@ function renderProductsGrid() {
   grid.innerHTML = "";
 
   let items = MenuDB.getByCategory(state.activeCat);
-  if (state.searchQuery) {
-    items = MenuDB.getAll().filter(p => p.name.toLowerCase().includes(state.searchQuery.toLowerCase()));
-  }
+  if (state.searchQuery) items = MenuDB.getAll().filter(p => p.name.toLowerCase().includes(state.searchQuery.toLowerCase()));
 
   items.forEach(p => {
     const card = document.createElement("div");
@@ -287,20 +248,13 @@ function renderProductsGrid() {
 }
 
 function handleProductClick(product) {
-  if (!state.activeTable) {
-    showToast("Lütfen önce bir masa seçin!");
-    switchView("tables");
-    return;
-  }
+  if (!state.activeTable) { showToast("Lütfen önce bir masa seçin!"); switchView("tables"); return; }
   addToCart(product);
 }
 
 function addToCart(product) {
-  if (state.cart[product.id]) {
-    state.cart[product.id].qty += 1;
-  } else {
-    state.cart[product.id] = { product, qty: 1 };
-  }
+  if (state.cart[product.id]) state.cart[product.id].qty += 1;
+  else state.cart[product.id] = { product, qty: 1 };
   saveCurrentCartToOrder();
   renderCart();
 }
@@ -308,9 +262,7 @@ function addToCart(product) {
 function changeCartQty(productId, delta) {
   if (state.cart[productId]) {
     state.cart[productId].qty += delta;
-    if (state.cart[productId].qty <= 0) {
-      delete state.cart[productId];
-    }
+    if (state.cart[productId].qty <= 0) delete state.cart[productId];
     saveCurrentCartToOrder();
     renderCart();
   }
@@ -319,10 +271,7 @@ function changeCartQty(productId, delta) {
 function saveCurrentCartToOrder() {
   if (!state.activeTable) return;
   const itemsArray = Object.values(state.cart).map(item => ({
-    productId: item.product.id,
-    name: item.product.name,
-    price: item.product.price,
-    qty: item.qty
+    productId: item.product.id, name: item.product.name, price: item.product.price, qty: item.qty
   }));
 
   if (itemsArray.length === 0) {
@@ -341,16 +290,9 @@ function saveCurrentCartToOrder() {
   } else {
     const newOrderId = "o_" + Date.now();
     const newOrder = {
-      id: newOrderId,
-      tableId: state.activeTable.id,
-      tableName: `Masa ${state.activeTable.num}`,
-      userId: state.currentUser.id,
-      userName: state.currentUser.name,
-      items: itemsArray,
-      status: "pending",
-      discount: 0,
-      total: 0,
-      createdAt: new Date().toISOString()
+      id: newOrderId, tableId: state.activeTable.id, tableName: `Masa ${state.activeTable.num}`,
+      userId: state.currentUser.id, userName: state.currentUser.name, items: itemsArray,
+      status: "pending", discount: 0, total: 0, createdAt: new Date().toISOString()
     };
     OrderDB.add(newOrder);
     TableDB.update(state.activeTable.id, { status: "occupied", activeOrderId: newOrderId });
@@ -403,36 +345,28 @@ function renderCart() {
   updateTotals(subTotal);
 }
 
-// HESAPLAMALAR VE AYARLARIN UYGULANMASI
 function updateTotals(subTotal) {
-  // Sistem ayarlarını (KDV, Servis) çek
   const sysSettings = typeof SettingsDB !== "undefined" ? SettingsDB.get() : { kdv: 0, service: 0 };
-  
   const discPercent = state.discountActive ? state.discount : 0;
   const discAmount = subTotal * (discPercent / 100);
   const totalAfterDiscount = subTotal - discAmount;
 
-  // KDV ve Servis oranlarını hesapla
+  // Ayarlardan gelen KDV ve Servis Ücretinin dinamik hesaplanması
   const kdvAmount = totalAfterDiscount * (sysSettings.kdv / 100);
   const serviceAmount = totalAfterDiscount * (sysSettings.service / 100);
-  
   const grandTotal = totalAfterDiscount + kdvAmount + serviceAmount;
 
-  if (document.getElementById("subTotal")) {
-    document.getElementById("subTotal").textContent = `${subTotal.toFixed(2)} ₺`;
-  }
-  if (document.getElementById("discountTotal")) {
-    document.getElementById("discountTotal").textContent = `${discAmount.toFixed(2)} ₺`;
-  }
-  if (document.getElementById("grandTotal")) {
-    document.getElementById("grandTotal").textContent = `${grandTotal.toFixed(2)} ₺`;
-  }
+  if (document.getElementById("subTotal")) document.getElementById("subTotal").textContent = `${subTotal.toFixed(2)} ₺`;
+  if (document.getElementById("discountTotal")) document.getElementById("discountTotal").textContent = `${discAmount.toFixed(2)} ₺`;
+  if (document.getElementById("grandTotal")) document.getElementById("grandTotal").textContent = `${grandTotal.toFixed(2)} ₺`;
+
+  document.getElementById("payKart")?.classList.toggle("accent", state.payMethod === "Kart");
+  document.getElementById("payKart")?.classList.toggle("secondary", state.payMethod !== "Kart");
+  document.getElementById("payNakit")?.classList.toggle("accent", state.payMethod === "Nakit");
+  document.getElementById("payNakit")?.classList.toggle("secondary", state.payMethod !== "Nakit");
 }
 
-function setPayMethod(method) {
-  state.payMethod = method;
-  renderCart();
-}
+function setPayMethod(method) { state.payMethod = method; renderCart(); }
 
 function toggleDiscount() {
   if (state.discountActive) {
@@ -440,23 +374,13 @@ function toggleDiscount() {
     state.discount = 0;
     renderCart();
   } else {
-    const val = prompt("İndirim yüzdesini giriniz (Örn: 10, 20):", "10");
+    const val = prompt("İndirim yüzdesini giriniz (Örn: 10):", "10");
     const num = parseInt(val);
     if (!isNaN(num) && num > 0 && num <= 100) {
       state.discount = num;
       state.discountActive = true;
       renderCart();
     }
-  }
-}
-
-function clearCart() {
-  if (!state.activeTable || Object.keys(state.cart).length === 0) return;
-  if (confirm("Adisyonu temizlemek istediğinize emin misiniz?")) {
-    state.cart = {};
-    saveCurrentCartToOrder();
-    renderCart();
-    showToast("Adisyon temizlendi.");
   }
 }
 
@@ -469,35 +393,23 @@ function checkoutOrder() {
   const finalTotal = parseFloat(grandTotalText) || 0;
 
   OrderDB.update(orderId, { 
-    status: "completed", 
-    closedAt: new Date().toISOString(), 
-    total: finalTotal,
-    payMethod: state.payMethod,
-    discount: state.discountActive ? state.discount : 0
+    status: "completed", closedAt: new Date().toISOString(), total: finalTotal,
+    payMethod: state.payMethod, discount: state.discountActive ? state.discount : 0
   });
   
   TableDB.update(state.activeTable.id, { status: "free", activeOrderId: null });
+  state.cart = {}; state.activeTable = null; state.discount = 0; state.discountActive = false;
   
-  state.cart = {};
-  state.activeTable = null;
-  state.discount = 0;
-  state.discountActive = false;
-  
-  renderCart();
-  renderTablesView();
-  showToast("Hesap tahsil edildi, adisyon kapatıldı.");
+  renderCart(); renderTablesView(); showToast("Hesap tahsil edildi.");
 }
 
-/* ── MASALAR ── */
 function renderTablesView() {
   const container = document.getElementById("tablesGrid");
   if (!container) return;
   container.innerHTML = "";
 
-  const tables = TableDB.getAll();
-  tables.forEach(t => {
+  TableDB.getAll().forEach(t => {
     const card = document.createElement("div");
-    
     let itemsSummaryHTML = "";
     let orderTotal = 0;
 
@@ -505,9 +417,7 @@ function renderTablesView() {
       const order = OrderDB.getById(t.activeOrderId);
       if (order && order.items) {
         order.items.forEach(item => {
-          itemsSummaryHTML += `<div style="display:flex;justify-content:space-between;color:var(--text2);font-size:12px;margin-bottom:2px;">
-            <span>• ${item.name} x${item.qty}</span>
-          </div>`;
+          itemsSummaryHTML += `<div style="display:flex;justify-content:space-between;color:var(--text2);font-size:12px;margin-bottom:2px;"><span>• ${item.name} x${item.qty}</span></div>`;
           orderTotal += item.price * item.qty;
         });
       }
@@ -521,13 +431,9 @@ function renderTablesView() {
       <div class="product-info" style="width:100%">
         <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--bg4);padding-bottom:6px;margin-bottom:8px;">
           <h3 class="product-name" style="font-size:16px;">Masa ${t.num} <span style="font-size:11px;color:var(--text3)">(${t.zone})</span></h3>
-          <span style="font-size:12px;font-weight:700;color:${isOccupied ? 'var(--accent)' : 'var(--text3)'}">
-            ${isOccupied ? "DOLU" : 'BOŞ'}
-          </span>
+          <span style="font-size:12px;font-weight:700;color:${isOccupied ? 'var(--accent)' : 'var(--text3)'}">${isOccupied ? "DOLU" : 'BOŞ'}</span>
         </div>
-        <div style="min-height:50px;max-height:90px;overflow-y:auto;line-height:1.4;">
-          ${itemsSummaryHTML || '<span style="color:var(--text3);font-size:12px;font-style:italic">Masa boş.</span>'}
-        </div>
+        <div style="min-height:50px;max-height:90px;overflow-y:auto;line-height:1.4;">${itemsSummaryHTML || '<span style="color:var(--text3);font-size:12px;font-style:italic">Masa boş.</span>'}</div>
       </div>
     `;
 
@@ -536,11 +442,7 @@ function renderTablesView() {
       state.cart = {};
       if (t.activeOrderId) {
         const order = OrderDB.getById(t.activeOrderId);
-        if (order) {
-          order.items.forEach(item => { 
-            state.cart[item.productId] = { product: { id: item.productId, name: item.name, price: item.price }, qty: item.qty }; 
-          });
-        }
+        if (order) order.items.forEach(item => { state.cart[item.productId] = { product: { id: item.productId, name: item.name, price: item.price }, qty: item.qty }; });
       }
       switchView("pos");
     };
@@ -548,14 +450,12 @@ function renderTablesView() {
   });
 }
 
-/* ── MENÜ YÖNETİMİ ── */
 function renderMenuManageView() {
   const grid = document.getElementById("menuManageGrid");
   if (!grid) return;
   grid.innerHTML = "";
 
-  const items = MenuDB.getAll();
-  items.forEach(p => {
+  MenuDB.getAll().forEach(p => {
     const card = document.createElement("div");
     card.className = "product-card";
     card.style.cursor = "default";
@@ -584,19 +484,15 @@ function openAddProductModal() {
   if(btn) btn.innerHTML = '<i class="fa-solid fa-plus"></i> Ürün Ekle';
 
   document.getElementById("newEmoji").value = "☕";
-  document.getElementById("newName").value = "";
-  document.getElementById("newPrice").value = "";
-  document.getElementById("newDesc").value = "";
-  
-  const chk = document.getElementById("newPopular");
-  if(chk) chk.checked = false;
+  document.getElementById("prodName").value = "";
+  document.getElementById("prodPrice").value = "";
+  document.getElementById("prodDesc").value = "";
 
-  const select = document.getElementById("newCategory");
-  select.innerHTML = "";
-  ["Espresso Bazlı", "Soğuk Kahve", "Özel Tatlar", "Çay & Alternatif", "Atıştırmalık", "Serinletici"].forEach(c => {
-    select.innerHTML += `<option>${c}</option>`;
-  });
-
+  const select = document.getElementById("prodCategory");
+  if(select){
+    select.innerHTML = "";
+    ["Espresso Bazlı", "Soğuk Kahve", "Özel Tatlar", "Çay & Alternatif", "Atıştırmalık", "Serinletici"].forEach(c => { select.innerHTML += `<option>${c}</option>`; });
+  }
   openModal("addProductModal");
 }
 
@@ -610,32 +506,27 @@ function openEditProductModal(productId) {
   if(btn) btn.innerHTML = '<i class="fa-solid fa-check"></i> Güncelle';
 
   document.getElementById("newEmoji").value = p.emoji || "☕";
-  document.getElementById("newName").value = p.name;
-  document.getElementById("newPrice").value = p.price;
-  document.getElementById("newDesc").value = p.desc || "";
-  
-  const chk = document.getElementById("newPopular");
-  if(chk) chk.checked = !!p.popular;
+  document.getElementById("prodName").value = p.name;
+  document.getElementById("prodPrice").value = p.price;
+  document.getElementById("prodDesc").value = p.desc || "";
 
-  const select = document.getElementById("newCategory");
-  select.innerHTML = "";
-  ["Espresso Bazlı", "Soğuk Kahve", "Özel Tatlar", "Çay & Alternatif", "Atıştırmalık", "Serinletici"].forEach(c => {
-    const selected = p.category === c ? "selected" : "";
-    select.innerHTML += `<option ${selected}>${c}</option>`;
-  });
-
+  const select = document.getElementById("prodCategory");
+  if(select){
+    select.innerHTML = "";
+    ["Espresso Bazlı", "Soğuk Kahve", "Özel Tatlar", "Çay & Alternatif", "Atıştırmalık", "Serinletici"].forEach(c => {
+      const selected = p.category === c ? "selected" : "";
+      select.innerHTML += `<option ${selected}>${c}</option>`;
+    });
+  }
   openModal("addProductModal");
 }
 
 function saveProduct() {
   const emoji = document.getElementById("newEmoji").value || "☕";
-  const name = document.getElementById("newName").value.trim();
-  const price = parseFloat(document.getElementById("newPrice").value);
-  const category = document.getElementById("newCategory").value;
-  const desc = document.getElementById("newDesc").value.trim();
-  
-  const chk = document.getElementById("newPopular");
-  const popular = chk ? chk.checked : false;
+  const name = document.getElementById("prodName").value.trim();
+  const price = parseFloat(document.getElementById("prodPrice").value);
+  const category = document.getElementById("prodCategory").value;
+  const desc = document.getElementById("prodDesc").value.trim();
 
   if (!name || isNaN(price) || price < 0) {
     alert("Lütfen ürün ismi ve geçerli bir fiyat giriniz!");
@@ -647,11 +538,11 @@ function saveProduct() {
   if (state.editingProductId) {
     const idx = allMenu.findIndex(m => m.id === state.editingProductId);
     if (idx >= 0) {
-      allMenu[idx] = { id: state.editingProductId, emoji, name, price, category, desc, popular };
+      allMenu[idx] = { id: state.editingProductId, emoji, name, price, category, desc, popular: allMenu[idx].popular };
       showToast("Ürün güncellendi.");
     }
   } else {
-    const newProd = { id: Date.now(), emoji, name, price, category, desc, popular };
+    const newProd = { id: Date.now(), emoji, name, price, category, desc, popular: false };
     allMenu.push(newProd);
     showToast("Yeni ürün eklendi.");
   }
@@ -672,108 +563,66 @@ function deleteProduct(productId) {
   }
 }
 
-/* ── RAPORLAR ── */
-function setReportMode(mode) {
-  state.reportMode = mode;
-  renderReportsView();
-}
+function setReportMode(mode) { state.reportMode = mode; renderReportsView(); }
 
 function renderReportsView() {
   const btnDaily = document.getElementById("btnReportDaily");
   const btnWeekly = document.getElementById("btnReportWeekly");
-  
-  if(btnDaily) {
-    btnDaily.classList.toggle("accent", state.reportMode === "daily");
-    btnDaily.classList.toggle("secondary", state.reportMode !== "daily");
-  }
-  if(btnWeekly) {
-    btnWeekly.classList.toggle("accent", state.reportMode === "weekly");
-    btnWeekly.classList.toggle("secondary", state.reportMode !== "weekly");
-  }
+  if(btnDaily) { btnDaily.classList.toggle("accent", state.reportMode === "daily"); btnDaily.classList.toggle("secondary", state.reportMode !== "daily"); }
+  if(btnWeekly) { btnWeekly.classList.toggle("accent", state.reportMode === "weekly"); btnWeekly.classList.toggle("secondary", state.reportMode !== "weekly"); }
 
   const completedOrders = OrderDB.getAll().filter(o => o.status === "completed");
   let filteredOrders = [];
-
   const now = new Date();
   if (state.reportMode === "daily") {
-    const oneDayAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
-    filteredOrders = completedOrders.filter(o => new Date(o.closedAt) >= oneDayAgo);
-    const label = document.getElementById("reportTitleLabel");
-    if(label) label.textContent = "Günlük Ciro";
+    filteredOrders = completedOrders.filter(o => new Date(o.closedAt) >= new Date(now.getTime() - (24 * 60 * 60 * 1000)));
+    if(document.getElementById("reportTitleLabel")) document.getElementById("reportTitleLabel").textContent = "Günlük Ciro";
   } else {
-    const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-    filteredOrders = completedOrders.filter(o => new Date(o.closedAt) >= sevenDaysAgo);
-    const label = document.getElementById("reportTitleLabel");
-    if(label) label.textContent = "Haftalık Ciro";
+    filteredOrders = completedOrders.filter(o => new Date(o.closedAt) >= new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000)));
+    if(document.getElementById("reportTitleLabel")) document.getElementById("reportTitleLabel").textContent = "Haftalık Ciro";
   }
 
-  let totalRevenue = 0;
-  let totalItemsSold = 0;
+  let totalRevenue = 0; let totalItemsSold = 0;
+  filteredOrders.forEach(o => { totalRevenue += o.total; o.items.forEach(i => totalItemsSold += i.qty); });
 
-  filteredOrders.forEach(o => {
-    totalRevenue += o.total;
-    o.items.forEach(i => totalItemsSold += i.qty);
-  });
-
-  const revEl = document.getElementById("statRevenue");
-  const ordCountEl = document.getElementById("statOrderCount");
-  const itemCountEl = document.getElementById("statItemCount");
-  
-  if(revEl) revEl.textContent = `${totalRevenue.toFixed(2)} ₺`;
-  if(ordCountEl) ordCountEl.textContent = filteredOrders.length;
-  if(itemCountEl) itemCountEl.textContent = totalItemsSold;
+  if(document.getElementById("statRevenue")) document.getElementById("statRevenue").textContent = `${totalRevenue.toFixed(2)} ₺`;
+  if(document.getElementById("statOrderCount")) document.getElementById("statOrderCount").textContent = filteredOrders.length;
+  if(document.getElementById("statItemCount")) document.getElementById("statItemCount").textContent = totalItemsSold;
 
   const list = document.getElementById("reportOrderList");
   if (!list) return;
   list.innerHTML = "";
 
-  if (filteredOrders.length === 0) {
-    list.innerHTML = `<div class="empty-state" style="padding:20px 0;"><p>Kayıt bulunmuyor.</p></div>`;
-    return;
-  }
+  if (filteredOrders.length === 0) { list.innerHTML = `<div class="empty-state" style="padding:20px 0;"><p>Kayıt bulunmuyor.</p></div>`; return; }
 
   filteredOrders.slice(-10).reverse().forEach(o => {
     const timeStr = new Date(o.closedAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
     const itemsStr = o.items.map(i => `${i.name} (x${i.qty})`).join(", ");
-
     const row = document.createElement("div");
     row.style = "background:var(--bg2); border:1px solid var(--bg4); padding:12px; border-radius:var(--r); display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;";
     row.innerHTML = `
-      <div>
-        <span style="font-weight:700;color:var(--text);">${o.tableName}</span>
-        <span style="font-size:12px;color:var(--text3);margin-left:8px;">${timeStr} — Kasa: ${o.userName}</span>
-        <div style="font-size:12px;color:var(--text2);margin-top:2px;">${itemsStr}</div>
-      </div>
-      <div style="text-align:right;">
-        <strong style="color:var(--accent);">${o.total.toFixed(2)} ₺</strong>
-        <div style="font-size:10px;color:var(--text3); text-transform:uppercase;">${o.payMethod}</div>
-      </div>
+      <div><span style="font-weight:700;color:var(--text);">${o.tableName}</span><span style="font-size:12px;color:var(--text3);margin-left:8px;">${timeStr} — Kasa: ${o.userName}</span><div style="font-size:12px;color:var(--text2);margin-top:2px;">${itemsStr}</div></div>
+      <div style="text-align:right;"><strong style="color:var(--accent);">${o.total.toFixed(2)} ₺</strong><div style="font-size:10px;color:var(--text3); text-transform:uppercase;">${o.payMethod}</div></div>
     `;
     list.appendChild(row);
   });
 }
 
-/* ── ⚙️ AYARLAR VE PERSONEL YÖNETİMİ ── */
 function renderSettingsView() {
-  loadSystemSettings(); // Ayar kutucuklarını doldurur
+  loadSystemSettings();
 
   const userTableBody = document.getElementById("settingsStaffTableBody");
   if (!userTableBody) return;
   userTableBody.innerHTML = "";
 
-  const users = UserDB.getAll();
-  users.forEach(u => {
+  UserDB.getAll().forEach(u => {
     const row = document.createElement("tr");
     row.innerHTML = `
       <td><div class="staff-avatar" style="width:32px; height:32px; font-size:12px; margin:0;">${u.avatar}</div></td>
       <td style="font-weight:600; color:#fff;">${u.name}</td>
       <td><span style="padding:4px 8px; border-radius:4px; font-size:11px; font-weight:600; background:${u.role==='admin'?'rgba(200,169,110,0.2)':'rgba(255,255,255,0.05)'}; color:${u.role==='admin'?'var(--accent)':'#ccc'}">${u.role === "admin" ? "Yönetici" : "Barista"}</span></td>
       <td style="font-family:monospace; color:var(--accent); font-weight:bold; letter-spacing:2px;">${u.pin}</td>
-      <td>
-        <button class="search-clear" style="padding:4px 8px; font-size:12px; border:1px solid #e05575; color:#e05575; background:none; border-radius:4px; cursor:pointer;" onclick="deleteStaff('${u.id}')">
-          <i class="fa-solid fa-trash"></i> Sil
-        </button>
-      </td>
+      <td><button class="search-clear" style="padding:4px 8px; font-size:12px; border:1px solid #e05575; color:#e05575; background:none; border-radius:4px; cursor:pointer;" onclick="deleteStaff('${u.id}')"><i class="fa-solid fa-trash"></i> Sil</button></td>
     `;
     userTableBody.appendChild(row);
   });
@@ -806,9 +655,7 @@ function saveSystemSettings() {
   if(typeof SettingsDB !== "undefined") {
     SettingsDB.save(newSettings);
     showToast("Sistem ayarları başarıyla güncellendi!");
-    if (state.activeTable) {
-        renderCart(); // Sepet açıkken KDV/Servis yansısın diye
-    }
+    if (state.activeTable) renderCart();
   }
 }
 
@@ -817,81 +664,33 @@ function saveNewStaff() {
   const roleSelect = document.getElementById("staffRoleSelect");
   const pinInput = document.getElementById("staffPinInput");
 
-  if (!nameInput.value || !pinInput.value || pinInput.value.length !== 4) {
-    showToast("Lütfen tüm alanları doğru doldurun!");
-    return;
-  }
+  if (!nameInput.value || !pinInput.value || pinInput.value.length !== 4) { showToast("Lütfen tüm alanları doldurun!"); return; }
 
-  const newUser = {
-    id: "u_" + Date.now(),
-    name: nameInput.value.trim(),
-    role: roleSelect.value,
-    pin: pinInput.value.trim(),
-    avatar: nameInput.value.trim().charAt(0).toUpperCase()
-  };
-
-  UserDB.add(newUser);
-  nameInput.value = "";
-  pinInput.value = "";
-  
-  renderSettingsView();
-  showToast("Yeni personel eklendi.");
+  UserDB.add({ id: "u_" + Date.now(), name: nameInput.value.trim(), role: roleSelect.value, pin: pinInput.value.trim(), avatar: nameInput.value.trim().charAt(0).toUpperCase() });
+  nameInput.value = ""; pinInput.value = "";
+  renderSettingsView(); showToast("Yeni personel eklendi.");
 }
 
 function deleteStaff(id) {
-  if (id === state.currentUser.id) {
-    showToast("Kendi hesabınızı silemezsiniz!");
-    return;
-  }
-  if (confirm("Bu personeli silmek istediğinize emin misiniz?")) {
-    UserDB.delete(id);
-    renderSettingsView();
-    showToast("Personel silindi.");
-  }
+  if (id === state.currentUser.id) { showToast("Kendi hesabınızı silemezsiniz!"); return; }
+  if (confirm("Personeli silmek istediğinize emin misiniz?")) { UserDB.delete(id); renderSettingsView(); showToast("Personel silindi."); }
 }
 
 function resetEntireSystem() {
   if (confirm("DİKKAT: Sistemdeki tüm veriler silinecektir. Emin misiniz?")) {
     localStorage.clear();
-    // Firebase silme işlemi db.js içerisindeyse oradan çağrılır, local'de çalışıyorsa clear yeterli.
     showToast("Sistem temizlendi! Yeniden başlatılıyor...");
     setTimeout(() => { window.location.reload(); }, 1000);
   }
 }
 
-/* ── YARDIMCI FONKSİYONLAR ── */
-function filterProducts(val) { 
-  state.searchQuery = val; 
-  renderProductsGrid(); 
-}
-
-function openModal(id) { 
-  document.getElementById(id)?.classList.add("open"); 
-}
-
-function closeModal(id) { 
-  document.getElementById(id)?.classList.remove("open"); 
-}
-
+function filterProducts(val) { state.searchQuery = val; renderProductsGrid(); }
+function openModal(id) { document.getElementById(id)?.classList.add("open"); }
+function closeModal(id) { document.getElementById(id)?.classList.remove("open"); }
 function showToast(msg) {
-  const toast = document.getElementById("toast");
-  const toastMsg = document.getElementById("toastMsg");
-  if(toast && toastMsg) {
-    toastMsg.textContent = msg;
-    toast.classList.add("show");
-    setTimeout(() => toast.classList.remove("show"), 2500);
-  }
+  const toast = document.getElementById("toast"); const toastMsg = document.getElementById("toastMsg");
+  if(toast && toastMsg) { toastMsg.textContent = msg; toast.classList.add("show"); setTimeout(() => toast.classList.remove("show"), 2500); }
 }
 
-// Modal dışına tıklayınca kapatma
-document.addEventListener("click", e => {
-  if (e.target.classList.contains("modal-overlay")) {
-    e.target.classList.remove("open");
-  }
-});
-
-document.addEventListener("keydown", e => {
-  if (e.key === "Escape") {
-    document.querySelectorAll(".modal-overlay.open").forEach(m => m.classList.remove("open"));
-  }
-});
+document.addEventListener("click", e => { if (e.target.classList.contains("modal-overlay")) e.target.classList.remove("open"); });
+document.addEventListener("keydown", e => { if (e.key === "Escape") document.querySelectorAll(".modal-overlay.open").forEach(m => m.classList.remove("open")); });
