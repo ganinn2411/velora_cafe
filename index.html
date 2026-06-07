@@ -1514,7 +1514,7 @@ function renderStaffList(){
     row.innerHTML=`
       <div class="staff-avatar-big" style="background:${avatarBg};color:${avatarColor};border:${avatarBorder};">${u.avatar}</div>
       <div class="staff-info">
-        <div class="staff-name">${u.name}</div>
+      <div class="staff-name" style="text-transform:capitalize">${u.name}</div>
         <div class="staff-meta">
           <span class="staff-role-badge ${u.role==="admin"?"badge-admin":"badge-barista"}">${u.role==="admin"?"Müdür":"Barista"}</span>
           <span class="pin-mask">${"•".repeat(u.pin.length)}</span>
@@ -1578,8 +1578,9 @@ function openEditStaffModal(userId){
 }
 
 function saveStaff(){
-  const name=document.getElementById("staffName").value.trim();
-  const avatar=document.getElementById("staffAvatar").value.trim()||name.charAt(0).toUpperCase();
+const nameRaw = document.getElementById("staffName").value.trim();
+const name = nameRaw.toLowerCase();
+const avatar = document.getElementById("staffAvatar").value.trim() || nameRaw.charAt(0).toUpperCase();
   const pin=document.getElementById("staffPin").value.trim();
   const role=document.getElementById("staffRole").value;
   const active=document.getElementById("staffActive").checked;
