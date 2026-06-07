@@ -126,3 +126,34 @@ const SessionDB = {
   setUser(u)  { DB.set(DB_KEYS.SESSION, u); },
   clear()     { DB.remove(DB_KEYS.SESSION); }
 };
+/* ── SİSTEM YAPILANDIRMA (AYARLAR) YÖNETİMİ ── */
+
+// Ayarlar paneli açıldığında kayıtlı verileri kutucuklara doldurur
+function loadSystemSettings() {
+  const settings = SettingsDB.get();
+  const kdvInput = document.getElementById("settingKdv");
+  const serviceInput = document.getElementById("settingService");
+  const footerInput = document.getElementById("settingFooter");
+  
+  if(kdvInput) kdvInput.value = settings.kdv;
+  if(serviceInput) serviceInput.value = settings.service;
+  if(footerInput) footerInput.value = settings.footerText;
+}
+
+// "Ayarları Kaydet" butonuna basıldığında çalışır
+function saveSystemSettings() {
+  const kdvInput = document.getElementById("settingKdv");
+  const serviceInput = document.getElementById("settingService");
+  const footerInput = document.getElementById("settingFooter");
+
+  if (!kdvInput || !serviceInput || !footerInput) return;
+
+  const newSettings = {
+    kdv: parseFloat(kdvInput.value) || 0,
+    service: parseFloat(serviceInput.value) || 0,
+    footerText: footerInput.value.trim()
+  };
+
+  SettingsDB.save(newSettings);
+  showToast("Sistem ayarları başarıyla güncellendi!");
+}
