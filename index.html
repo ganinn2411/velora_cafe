@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════════
    AURA Coffee & Kitchen — POS System Stylesheet
@@ -322,6 +323,10 @@ select.form-input option { background:var(--bg3); }
         </div>
       </div>
       <div class="topbar-right">
+        <button class="topbar-btn" id="takeawayBtn" onclick="selectTakeaway()" title="Al-Götür">
+          <i class="fa-solid fa-bag-shopping" style="color:var(--green)"></i>
+          <span>Al-Götür</span>
+        </button>
         <button class="topbar-btn" onclick="switchView('tables')">
           <i class="fa-solid fa-chair" style="color:var(--accent)"></i>
           <span id="activeTableLabel">Masa Seçilmedi</span>
@@ -380,6 +385,7 @@ select.form-input option { background:var(--bg3); }
       <div class="topbar-right" style="gap:8px">
         <button class="modal-btn accent" id="btnReportDaily" onclick="setReportMode('daily')">Son 24 Saat</button>
         <button class="modal-btn secondary" id="btnReportWeekly" onclick="setReportMode('weekly')">Son 7 Gün</button>
+        <button class="modal-btn secondary" onclick="exportReportPDF()" style="color:var(--red);border-color:rgba(224,85,117,.25);gap:7px;"><i class="fa-solid fa-file-pdf"></i> PDF İndir</button>
       </div>
     </header>
     <div style="padding:24px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:20px;">
@@ -757,10 +763,19 @@ function renderProductsGrid(){
   });
 }
 
+function selectTakeaway(){
+  // Virtual "takeaway" table
+  state.activeTable = {id:"TAKEAWAY", num:"Al-Götür", zone:"takeaway", zoneLabel:"Al-Götür", status:"occupied", activeOrderId: state.activeTable && state.activeTable.id==="TAKEAWAY" ? state.activeTable.activeOrderId : null};
+  document.getElementById("activeTableLabel").textContent="Al-Götür";
+  const btn=document.getElementById("takeawayBtn");
+  if(btn){ btn.style.borderColor="var(--green)"; btn.style.color="var(--green)"; }
+  renderCart();
+  showToast("Al-Götür modu aktif!");
+}
+
 function handleProductClick(product){
   if(!state.activeTable){
-    showToast("Lütfen önce Masalar sekmesinden bir masa seçin!");
-    switchView("tables");
+    showToast("Lütfen bir masa seçin veya Al-Götür butonuna basın!");
     return;
   }
   addToCart(product);
@@ -801,8 +816,9 @@ function saveCurrentCartToOrder(){
     OrderDB.update(state.activeTable.activeOrderId,{items:itemsArray});
   } else {
     const newOrderId="o_"+Date.now();
+    const tLabel=state.activeTable.zone==="takeaway"?"Al-Götür":`Masa ${state.activeTable.num}`;
     OrderDB.add({
-      id:newOrderId, tableId:state.activeTable.id, tableName:`Masa ${state.activeTable.num}`,
+      id:newOrderId, tableId:state.activeTable.id, tableName:tLabel,
       userId:state.currentUser.id, userName:state.currentUser.name,
       items:itemsArray, status:"pending", discount:0, total:0, createdAt:new Date().toISOString()
     });
@@ -1081,24 +1097,189 @@ function renderReportsView(){
     list.innerHTML=`<div class="empty-state"><p>Bu periyotta tamamlanmış satış bulunmuyor.</p></div>`;
     return;
   }
-  filteredOrders.slice(-10).reverse().forEach(o=>{
+  filteredOrders.slice(-50).reverse().forEach(o=>{
     const timeStr=new Date(o.closedAt).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
-    const itemsStr=o.items.map(i=>`${i.name} (x${i.qty})`).join(", ");
+    const dateStr=new Date(o.closedAt).toLocaleDateString("tr-TR",{day:"numeric",month:"short"});
+    const itemsStr=o.items.map(i=>`${i.name} x${i.qty}`).join(", ");
+    let subTotal=0; o.items.forEach(i=>subTotal+=i.price*i.qty);
+    const discPct=o.discount||0;
+    const discAmt=subTotal*(discPct/100);
+    const discHTML=discPct>0
+      ? `<span style="font-size:11px;color:var(--green);background:var(--green-bg);border:1px solid rgba(76,175,122,.2);padding:1px 7px;border-radius:6px;margin-left:6px;">-%${discPct} (${discAmt.toFixed(0)} ₺ indirim)</span>`
+      : `<span style="font-size:11px;color:var(--text3);margin-left:6px;">indirim yok</span>`;
     const row=document.createElement("div");
-    row.style="background:var(--bg3);border:1px solid var(--bg4);padding:12px;border-radius:var(--r);display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;";
+    row.style="background:var(--bg3);border:1px solid var(--bg4);padding:12px 14px;border-radius:var(--r);display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:12px;";
     row.innerHTML=`
-      <div>
-        <span style="font-weight:700;color:var(--text);">${o.tableName}</span>
-        <span style="font-size:12px;color:var(--text3);margin-left:8px;">${timeStr} — ${o.userName}</span>
-        <div style="font-size:12px;color:var(--text2);margin-top:2px;">${itemsStr}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px;">
+          <span style="font-weight:700;color:var(--text);font-size:13px;">${o.tableName}</span>
+          <span style="font-size:11px;color:var(--text3);">${dateStr} ${timeStr}</span>
+          <span style="font-size:11px;color:var(--text3);">— ${o.userName}</span>
+        </div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${itemsStr}</div>
+        <div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;">
+          <span style="font-size:11px;color:var(--text3);">Ara: <b style="color:var(--text2);">${subTotal.toFixed(0)} ₺</b></span>
+          ${discHTML}
+        </div>
       </div>
-      <div style="text-align:right;">
-        <strong style="color:var(--accent);">${o.total.toFixed(2)} ₺</strong>
-        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;">${o.payMethod}</div>
+      <div style="text-align:right;flex-shrink:0;">
+        <strong style="color:var(--accent);font-size:15px;font-family:'Syne',sans-serif;">${o.total.toFixed(2)} ₺</strong>
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;margin-top:2px;">${o.payMethod||""}</div>
       </div>
     `;
     list.appendChild(row);
   });
+}
+
+
+/* ═══════════════════════════════════════════════
+   PDF EXPORT
+═══════════════════════════════════════════════ */
+function exportReportPDF(){
+  const { jsPDF } = window.jspdf;
+  if(!jsPDF){ showToast("PDF kütüphanesi yükleniyor, lütfen tekrar deneyin."); return; }
+
+  const doc = new jsPDF({ orientation:"portrait", unit:"mm", format:"a4" });
+  const pageW = 210, margin = 14, contentW = pageW - margin*2;
+  let y = 20;
+
+  // ── Header ──────────────────────────────────────────
+  doc.setFillColor(200,169,110);
+  doc.roundedRect(margin, y-6, contentW, 18, 3, 3, "F");
+  doc.setFont("helvetica","bold");
+  doc.setFontSize(18);
+  doc.setTextColor(15,15,15);
+  doc.text("AURA Coffee & Kitchen", margin+4, y+5);
+  doc.setFontSize(9);
+  doc.setFont("helvetica","normal");
+  const modeLabel = state.reportMode==="daily" ? "Son 24 Saat Raporu" : "Son 7 Gun Raporu";
+  doc.text(modeLabel, pageW-margin-4, y+5, {align:"right"});
+  y += 20;
+
+  // ── Date stamp ──────────────────────────────────────
+  doc.setFontSize(9);
+  doc.setTextColor(120,120,120);
+  doc.text("Olusturma tarihi: " + new Date().toLocaleString("tr-TR"), margin, y);
+  y += 8;
+
+  // ── Collect data ────────────────────────────────────
+  const completedOrders = OrderDB.getAll().filter(o=>o.status==="completed");
+  const now = new Date();
+  let filteredOrders = [];
+  if(state.reportMode==="daily"){
+    const ago = new Date(now.getTime()-(24*60*60*1000));
+    filteredOrders = completedOrders.filter(o=>new Date(o.closedAt)>=ago);
+  } else {
+    const ago = new Date(now.getTime()-(7*24*60*60*1000));
+    filteredOrders = completedOrders.filter(o=>new Date(o.closedAt)>=ago);
+  }
+  let totalRevenue=0, totalItems=0, totalDiscount=0;
+  filteredOrders.forEach(o=>{
+    totalRevenue+=o.total;
+    o.items.forEach(i=>totalItems+=i.qty);
+    let sub=0; o.items.forEach(i=>sub+=i.price*i.qty);
+    totalDiscount+=sub*(( o.discount||0)/100);
+  });
+
+  // ── Summary boxes ───────────────────────────────────
+  const boxes=[
+    {label:"Toplam Ciro",       val:totalRevenue.toFixed(2)+" TL",  color:[76,175,122]},
+    {label:"Kapatilag Adisyon", val:filteredOrders.length+"",        color:[155,143,224]},
+    {label:"Satilan Urun",      val:totalItems+"",                   color:[200,169,110]},
+    {label:"Toplam Indirim",    val:totalDiscount.toFixed(2)+" TL",  color:[224,85,117]},
+  ];
+  const bw=(contentW-9)/4;
+  boxes.forEach((b,i)=>{
+    const bx=margin+i*(bw+3);
+    doc.setFillColor(25,25,25);
+    doc.roundedRect(bx,y,bw,18,2,2,"F");
+    doc.setDrawColor(...b.color);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(bx,y,bw,18,2,2,"S");
+    doc.setFontSize(7.5);
+    doc.setTextColor(140,140,130);
+    doc.setFont("helvetica","normal");
+    doc.text(b.label, bx+bw/2, y+6, {align:"center"});
+    doc.setFontSize(12);
+    doc.setFont("helvetica","bold");
+    doc.setTextColor(...b.color);
+    doc.text(b.val, bx+bw/2, y+14, {align:"center"});
+  });
+  y += 26;
+
+  // ── Table header ────────────────────────────────────
+  doc.setFillColor(30,30,30);
+  doc.rect(margin, y, contentW, 7, "F");
+  doc.setFontSize(7.5);
+  doc.setFont("helvetica","bold");
+  doc.setTextColor(200,169,110);
+  doc.text("MASA / TUR",     margin+2,       y+5);
+  doc.text("SAAT",           margin+36,      y+5);
+  doc.text("KASIYER",        margin+52,      y+5);
+  doc.text("URUNLER",        margin+80,      y+5);
+  doc.text("INDIRIM",        margin+130,     y+5);
+  doc.text("TOPLAM",         pageW-margin-2, y+5, {align:"right"});
+  y += 9;
+
+  // ── Table rows ──────────────────────────────────────
+  const rowH = 10;
+  filteredOrders.slice().reverse().forEach((o,idx)=>{
+    if(y > 270){ doc.addPage(); y=20; }
+    // alternating bg
+    if(idx%2===0){ doc.setFillColor(18,18,18); doc.rect(margin,y,contentW,rowH,"F"); }
+
+    const timeStr=new Date(o.closedAt).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"});
+    const dateStr=new Date(o.closedAt).toLocaleDateString("tr-TR",{day:"2-digit",month:"2-digit"});
+    let sub=0; o.items.forEach(i=>sub+=i.price*i.qty);
+    const discPct=o.discount||0;
+    const discAmt=sub*(discPct/100);
+    const discLabel=discPct>0 ? "-%"+discPct+" ("+discAmt.toFixed(0)+" TL)" : "-";
+    const itemsShort=o.items.map(i=>i.name+" x"+i.qty).join(", ");
+    const truncItems=itemsShort.length>38 ? itemsShort.substring(0,36)+"..." : itemsShort;
+
+    doc.setFont("helvetica","normal");
+    doc.setFontSize(8);
+    doc.setTextColor(220,220,210);
+    doc.text(o.tableName||"-",                margin+2,       y+7);
+    doc.text(dateStr+" "+timeStr,             margin+36,      y+7);
+    doc.text((o.userName||"-").substring(0,12), margin+52,    y+7);
+    doc.text(truncItems,                      margin+80,      y+7);
+
+    if(discPct>0){
+      doc.setTextColor(76,175,122);
+      doc.text(discLabel, margin+130, y+7);
+    } else {
+      doc.setTextColor(90,90,85);
+      doc.text(discLabel, margin+130, y+7);
+    }
+
+    doc.setFont("helvetica","bold");
+    doc.setTextColor(200,169,110);
+    doc.text(o.total.toFixed(2)+" TL", pageW-margin-2, y+7, {align:"right"});
+
+    // bottom border
+    doc.setDrawColor(30,30,30);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y+rowH, pageW-margin, y+rowH);
+    y += rowH;
+  });
+
+  // ── Footer ──────────────────────────────────────────
+  y += 6;
+  doc.setDrawColor(200,169,110);
+  doc.setLineWidth(0.4);
+  doc.line(margin, y, pageW-margin, y);
+  y += 5;
+  doc.setFont("helvetica","italic");
+  doc.setFontSize(8);
+  doc.setTextColor(100,90,80);
+  doc.text("AURA Coffee & Kitchen — POS Raporu", margin, y);
+  doc.text("Toplam: "+totalRevenue.toFixed(2)+" TL", pageW-margin, y, {align:"right"});
+
+  // ── Save ────────────────────────────────────────────
+  const fname = "AURA_Rapor_"+(state.reportMode==="daily"?"24Saat":"7Gun")+"_"+new Date().toLocaleDateString("tr-TR").replace(/\./g,"-")+".pdf";
+  doc.save(fname);
+  showToast("PDF indirildi: "+fname);
 }
 
 /* ═══════════════════════════════════════════════
