@@ -115,6 +115,11 @@ const OrderDB = {
   }
 };
 
+function toggleForgotHelp() {
+  const el = document.getElementById("forgotHelp");
+  el.style.display = el.style.display === "none" ? "block" : "none";
+}
+
 // SESSION DB INTERFACE
 const SessionDB = {
   getUser()   { return DB.get(DB_KEYS.SESSION); },
