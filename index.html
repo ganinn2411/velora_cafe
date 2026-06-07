@@ -75,47 +75,30 @@ html, body { width:100%; height:100%; overflow:hidden; background:var(--bg); col
 .lock-logo-letter { font-family:'Syne',sans-serif; font-weight:800; font-size:28px; color:#0a0a0a; letter-spacing:-2px; }
 .lock-title { font-family:'Syne',sans-serif; font-size:30px; font-weight:800; letter-spacing:-1px; color:var(--text); margin-bottom:4px; }
 .lock-subtitle { font-size:12px; color:var(--text3); margin-bottom:20px; letter-spacing:.8px; text-transform:uppercase; }
-.lock-divider { border:none; border-top:1px solid var(--bg4); margin:16px 0; }
-.lock-section-title { font-size:10px; color:var(--text3); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:14px; }
+.lock-divider { border:none; border-top:1px solid var(--bg4); margin:20px 0; }
 
-.staff-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.staff-card {
-  background:var(--bg3); border:var(--border); border-radius:var(--r); padding:16px 12px;
-  cursor:pointer; transition:var(--transition); display:flex; flex-direction:column;
-  align-items:center; gap:8px;
+/* Login Form */
+.login-form { display:flex; flex-direction:column; gap:14px; text-align:left; }
+.login-field { display:flex; flex-direction:column; gap:7px; }
+.login-label { font-size:11px; color:var(--text3); font-weight:600; letter-spacing:1px; text-transform:uppercase; }
+.login-input {
+  background:var(--bg3); border:var(--border2); border-radius:var(--r);
+  padding:13px 16px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px;
+  outline:none; width:100%; transition:var(--transition); letter-spacing:.3px;
 }
-.staff-card:hover { border-color:var(--accent-bd); background:var(--bg4); transform:translateY(-2px); }
-.staff-avatar {
-  width:44px; height:44px; border-radius:12px;
-  display:flex; align-items:center; justify-content:center;
-  font-family:'Syne',sans-serif; font-weight:700; font-size:18px;
-  background:var(--accent-bg); color:var(--accent); border:1px solid var(--accent-bd);
+.login-input:focus { border-color:var(--accent-bd); background:var(--bg4); }
+.login-input::placeholder { color:var(--text3); font-size:13px; letter-spacing:0; }
+.login-input.pin-field { letter-spacing:6px; font-family:'Syne',sans-serif; font-weight:700; font-size:18px; }
+.login-input.pin-field::placeholder { letter-spacing:0; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:400; }
+.login-error { font-size:12px; color:var(--red); background:var(--red-bg); border:1px solid rgba(224,85,117,.2); border-radius:var(--r-sm); padding:8px 12px; display:none; }
+.login-error.show { display:block; }
+.login-btn {
+  background:var(--accent); border:none; border-radius:var(--r); padding:14px;
+  color:#0a0a0a; font-family:'Syne',sans-serif; font-size:15px; font-weight:700;
+  cursor:pointer; transition:var(--transition); margin-top:4px; letter-spacing:.3px;
 }
-.staff-name { font-size:13px; font-weight:500; color:var(--text); }
-.staff-role { font-size:11px; color:var(--text3); }
-
-/* PIN Section */
-.pin-back-btn {
-  position:absolute; top:16px; left:16px;
-  background:none; border:none; color:var(--text3); font-size:12px;
-  cursor:pointer; display:flex; align-items:center; gap:6px;
-  font-family:'DM Sans',sans-serif; transition:var(--transition);
-}
-.pin-back-btn:hover { color:var(--text2); }
-
-.pin-dots-container { display:flex; justify-content:center; gap:14px; margin:24px 0 8px; }
-.pin-dot { width:14px; height:14px; border-radius:50%; background:var(--bg4); border:2px solid var(--bg5); transition:all .2s; }
-.pin-dot.active { background:var(--accent); border-color:var(--accent); transform:scale(1.15); }
-
-.pin-keyboard { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-top:16px; }
-.pin-key {
-  background:var(--bg3); border:var(--border2); border-radius:var(--r); height:54px;
-  color:var(--text); font-family:'Syne',sans-serif; font-size:20px; font-weight:700;
-  cursor:pointer; transition:var(--transition); display:flex; align-items:center; justify-content:center;
-}
-.pin-key:hover { background:var(--bg4); border-color:var(--accent-bd); }
-.pin-key:active { transform:scale(.93); background:var(--accent-bg); }
-.pin-key.text { font-size:14px; color:var(--text3); font-family:'DM Sans',sans-serif; }
+.login-btn:hover { background:var(--accent2); transform:translateY(-1px); }
+.login-btn:active { transform:translateY(0); }
 
 /* ── APP SHELL ───────────────────────────────────────── */
 .app { display:flex; width:100vw; height:100vh; overflow:hidden; }
@@ -269,44 +252,26 @@ select.form-input option { background:var(--bg3); }
 <div class="lock-screen" id="lockScreen">
   <div class="lock-bg-orb lock-orb1"></div>
   <div class="lock-bg-orb lock-orb2"></div>
-
-  <!-- Staff Selection -->
-  <div class="lock-card" id="lockStaffSection">
+  <div class="lock-card" style="max-width:420px;">
     <div class="lock-logo"><span class="lock-logo-letter">A</span></div>
     <h1 class="lock-title">AURA</h1>
-    <p class="lock-subtitle">Coffee & Kitchen POS</p>
+    <p class="lock-subtitle">Coffee &amp; Kitchen POS</p>
     <hr class="lock-divider" />
-    <p class="lock-section-title">Personel Seçin</p>
-    <div class="staff-grid" id="lockStaffGrid"></div>
-  </div>
-
-  <!-- PIN Entry -->
-  <div class="lock-card" id="lockPinSection" style="display:none;">
-    <button class="pin-back-btn" onclick="backToStaffSelect()">
-      <i class="fa-solid fa-arrow-left"></i> Personel Değiştir
-    </button>
-    <div class="lock-logo"><span class="lock-logo-letter">A</span></div>
-    <h2 class="lock-title" id="pinTargetName" style="font-size:22px;margin-bottom:2px">Personel</h2>
-    <p class="lock-subtitle" id="pinTargetRole" style="color:var(--accent)">Rol</p>
-    <div class="pin-dots-container">
-      <div class="pin-dot" id="dot0"></div>
-      <div class="pin-dot" id="dot1"></div>
-      <div class="pin-dot" id="dot2"></div>
-      <div class="pin-dot" id="dot3"></div>
-    </div>
-    <div class="pin-keyboard">
-      <button class="pin-key" onclick="pressPin('1')">1</button>
-      <button class="pin-key" onclick="pressPin('2')">2</button>
-      <button class="pin-key" onclick="pressPin('3')">3</button>
-      <button class="pin-key" onclick="pressPin('4')">4</button>
-      <button class="pin-key" onclick="pressPin('5')">5</button>
-      <button class="pin-key" onclick="pressPin('6')">6</button>
-      <button class="pin-key" onclick="pressPin('7')">7</button>
-      <button class="pin-key" onclick="pressPin('8')">8</button>
-      <button class="pin-key" onclick="pressPin('9')">9</button>
-      <button class="pin-key text" onclick="clearPin()">Sil</button>
-      <button class="pin-key" onclick="pressPin('0')">0</button>
-      <button class="pin-key text" style="visibility:hidden"></button>
+    <div class="login-form">
+      <div class="login-field">
+        <label class="login-label">Ad Soyad</label>
+        <input type="text" class="login-input" id="loginName" placeholder="Adınızı yazın..." autocomplete="off" onkeydown="if(event.key==='Enter') document.getElementById('loginPin').focus()" />
+      </div>
+      <div class="login-field">
+        <label class="login-label">PIN Şifre</label>
+        <input type="password" class="login-input pin-field" id="loginPin" placeholder="••••" maxlength="4" autocomplete="off" onkeydown="if(event.key==='Enter') doLogin()" oninput="this.value=this.value.replace(/[^0-9]/g,'')" />
+      </div>
+      <div class="login-error" id="loginError">
+        <i class="fa-solid fa-circle-exclamation"></i> Ad veya PIN hatalı. Lütfen tekrar deneyin.
+      </div>
+      <button class="login-btn" onclick="doLogin()">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> &nbsp;Giriş Yap
+      </button>
     </div>
   </div>
 </div>
@@ -649,82 +614,39 @@ function updateClock(){
 ═══════════════════════════════════════════════ */
 function renderLockScreen(){
   state.currentUser=null;
-  state.pinInput="";
   SessionDB.clear();
   document.getElementById("app").style.display="none";
   document.getElementById("lockScreen").style.display="flex";
-  document.getElementById("lockStaffSection").style.display="block";
-  document.getElementById("lockPinSection").style.display="none";
-
-  const grid=document.getElementById("lockStaffGrid");
-  grid.innerHTML="";
-  UserDB.getAll().forEach(u=>{
-    const card=document.createElement("div");
-    card.className="staff-card";
-    card.innerHTML=`
-      <div class="staff-avatar">${u.avatar}</div>
-      <div class="staff-name">${u.name}</div>
-      <div class="staff-role">${u.role==="admin"?"Yönetici":"Barista"}</div>
-    `;
-    card.onclick=()=>selectStaffForPin(u.id);
-    grid.appendChild(card);
-  });
+  // Reset form
+  document.getElementById("loginName").value="";
+  document.getElementById("loginPin").value="";
+  document.getElementById("loginError").classList.remove("show");
+  setTimeout(()=>document.getElementById("loginName").focus(), 100);
 }
 
-function selectStaffForPin(userId){
-  const u=UserDB.getById(userId);
-  if(!u) return;
-  state.selectedUserId=userId;
-  state.pinInput="";
-  document.getElementById("pinTargetName").textContent=u.name;
-  document.getElementById("pinTargetRole").textContent=u.role==="admin"?"Yönetici Girişi":"Barista Girişi";
-  document.getElementById("lockStaffSection").style.display="none";
-  document.getElementById("lockPinSection").style.display="flex";
-  document.getElementById("lockPinSection").style.flexDirection="column";
-  document.getElementById("lockPinSection").style.alignItems="center";
-  updatePinDots();
-}
+function doLogin(){
+  const nameInput = document.getElementById("loginName").value.trim().toLowerCase();
+  const pinInput  = document.getElementById("loginPin").value.trim();
+  const errorEl   = document.getElementById("loginError");
 
-function backToStaffSelect(){
-  state.pinInput="";
-  document.getElementById("lockStaffSection").style.display="block";
-  document.getElementById("lockPinSection").style.display="none";
-}
+  if(!nameInput || !pinInput){ errorEl.classList.add("show"); return; }
 
-function pressPin(num){
-  if(state.pinInput.length<4){
-    state.pinInput+=num;
-    updatePinDots();
-  }
-  if(state.pinInput.length===4){
-    setTimeout(verifyPin,150);
-  }
-}
+  // Match by name (case-insensitive, partial match allowed)
+  const user = UserDB.getAll().find(u =>
+    u.name.toLowerCase().includes(nameInput) && u.pin === pinInput && u.active
+  );
 
-function clearPin(){
-  state.pinInput="";
-  updatePinDots();
-}
-
-function updatePinDots(){
-  for(let i=0;i<4;i++){
-    const dot=document.getElementById("dot"+i);
-    if(dot) dot.classList.toggle("active", i<state.pinInput.length);
-  }
-}
-
-function verifyPin(){
-  const u=UserDB.getById(state.selectedUserId);
-  if(u && u.pin===state.pinInput){
-    loginUser(u, true);
+  if(user){
+    errorEl.classList.remove("show");
+    loginUser(user, true);
   } else {
-    showToast("Hatalı PIN! Lütfen tekrar deneyin.");
-    // Shake animation
-    const card=document.getElementById("lockPinSection");
+    errorEl.classList.add("show");
+    const card = document.querySelector(".lock-card");
     card.style.animation="none";
     card.offsetHeight;
     card.style.animation="shake 0.4s ease";
-    clearPin();
+    document.getElementById("loginPin").value="";
+    document.getElementById("loginPin").focus();
   }
 }
 
