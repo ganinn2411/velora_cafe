@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AURA Coffee — POS Sistemi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+       LOCK SCREEN
+  ═══════════════════════════════════════════════ -->
+  <div class="lock-screen" id="lockScreen">
+    <div class="lock-bg-orb lock-orb1"></div>
+    <div class="lock-bg-orb lock-orb2"></div>
+    <div class="lock-card">
+      <div class="lock-logo">
+        <span class="lock-logo-letter">A</span>
+      </div>
+      <h1 class="lock-title">AURA</h1>
+      <p class="lock-subtitle">Coffee & Kitchen POS</p>
+      <div class="lock-staff">
+        <p class="lock-staff-label">Personel Seçin</p>
+        <div class="lock-staff-grid">
+          <button class="staff-btn" onclick="selectStaff('Barista Efe', 'barista')">
+            <span class="staff-avatar" style="background:#C8A96E22;color:#C8A96E">E</span>
+            <span>Barista Efe</span>
+          </button>
+          <button class="staff-btn" onclick="selectStaff('Kasiyer Selin', 'kasiyer')">
+            <span class="staff-avatar" style="background:#7C6ECA22;color:#9B8FE0">S</span>
+            <span>Kasiyer Selin</span>
+          </button>
+          <button class="staff-btn" onclick="selectStaff('Müdür Kerem', 'mudur')">
+            <span class="staff-avatar" style="background:#4CAF7A22;color:#4CAF7A">K</span>
+            <span>Müdür Kerem</span>
+          </button>
+          <button class="staff-btn" onclick="selectStaff('Barista Ayşe', 'barista')">
+            <span class="staff-avatar" style="background:#E0557522;color:#E05575">A</span>
+            <span>Barista Ayşe</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MAIN APP
+  ═══════════════════════════════════════════════ -->
+  <div class="app" id="app" style="display:none">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">A</div>
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-view="pos" onclick="switchView('pos', this)" title="Sipariş">
+          <i class="fa-solid fa-mug-hot"></i>
+          <span class="nav-label">Sipariş</span>
+        </button>
+        <button class="nav-btn" data-view="tables" onclick="switchView('tables', this)" title="Masalar">
+          <i class="fa-solid fa-table-cells"></i>
+          <span class="nav-label">Masalar</span>
+        </button>
+        <button class="nav-btn" data-view="barista" onclick="switchView('barista', this)" title="Barista">
+          <i class="fa-solid fa-fire-burner"></i>
+          <span class="nav-label">Barista</span>
+        </button>
+        <button class="nav-btn" data-view="reports" onclick="switchView('reports', this)" title="Raporlar">
+          <i class="fa-solid fa-chart-line"></i>
+          <span class="nav-label">Rapor</span>
+        </button>
+        <button class="nav-btn" data-view="menu-manage" onclick="switchView('menu-manage', this)" title="Menü">
+          <i class="fa-solid fa-sliders"></i>
+          <span class="nav-label">Menü</span>
+        </button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="staff-pill" id="staffPill">
+          <span class="staff-pill-avatar" id="staffAvatar">E</span>
+          <div class="staff-pill-info">
+            <span class="staff-pill-name" id="staffName">Barista Efe</span>
+            <span class="staff-pill-role" id="staffRole">Barista</span>
+          </div>
+        </div>
+        <button class="nav-btn" onclick="lockApp()" title="Çıkış">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ═══ VIEW: POS ═══ -->
+    <div class="view" id="view-pos">
+
+      <!-- TOPBAR -->
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">Sipariş Al</div>
+          <div class="topbar-meta" id="topbarMeta">—</div>
+        </div>
+        <div class="topbar-center">
+          <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+            <input type="text" class="search-input" placeholder="Ürün ara..." id="searchInput" oninput="filterProducts(this.value)" />
+            <button class="search-clear" id="searchClear" onclick="clearSearch()" style="display:none"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-btn" onclick="switchView('tables', document.querySelector('[data-view=tables]'))" id="tableSelectBtn">
+            <i class="fa-solid fa-chair"></i>
+            <span id="activeTableLabel">Masa Seç</span>
+            <i class="fa-solid fa-chevron-down" style="font-size:10px;opacity:.5"></i>
+          </button>
+          <div class="topbar-time" id="topbarTime">00:00</div>
+        </div>
+      </header>
+
+      <!-- POS BODY -->
+      <div class="pos-body">
+
+        <!-- MENU PANEL -->
+        <div class="menu-panel">
+          <!-- CATEGORY TABS -->
+          <div class="cat-tabs" id="catTabs"></div>
+
+          <!-- PRODUCT GRID -->
+          <div class="product-scroll">
+            <div class="product-grid" id="productGrid"></div>
+          </div>
+        </div>
+
+        <!-- ORDER PANEL -->
+        <div class="order-panel">
+
+          <div class="order-header">
+            <div class="order-header-top">
+              <span class="order-title">Sipariş</span>
+              <div class="order-meta-row">
+                <span class="order-badge" id="orderBadge">0 ürün</span>
+                <button class="order-clear-btn" onclick="clearCart()" id="clearCartBtn" style="display:none">
+                  <i class="fa-solid fa-trash"></i> Temizle
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="order-list" id="orderList">
+            <div class="order-empty">
+              <div class="order-empty-icon">☕</div>
+              <p>Sipariş boş</p>
+              <span>Menüden ürün ekleyin</span>
+            </div>
+          </div>
+
+          <!-- NOTE -->
+          <div class="order-note-wrap">
+            <label class="note-label"><i class="fa-regular fa-note-sticky"></i> Sipariş Notu</label>
+            <textarea class="note-input" id="orderNote" placeholder="Ör: az şeker, oat milk, buz…"></textarea>
+          </div>
+
+          <!-- TOTALS -->
+          <div class="order-totals">
+            <div class="total-row">
+              <span>Ara Toplam</span>
+              <span id="subtotalVal">₺0</span>
+            </div>
+            <div class="total-row">
+              <span>KDV %8</span>
+              <span id="taxVal">₺0</span>
+            </div>
+            <div class="total-row discount-row" id="discountRow" style="display:none">
+              <span><i class="fa-solid fa-tag"></i> İndirim</span>
+              <span id="discountVal" style="color:var(--green)">-₺0</span>
+            </div>
+            <div class="total-row total-grand">
+              <span>Toplam</span>
+              <span id="grandTotalVal">₺0</span>
+            </div>
+          </div>
+
+          <!-- DISCOUNT -->
+          <div class="discount-wrap">
+            <button class="discount-toggle" onclick="toggleDiscount()">
+              <i class="fa-solid fa-percent"></i> İndirim Uygula
+            </button>
+            <div class="discount-box" id="discountBox" style="display:none">
+              <input type="number" class="discount-input" id="discountAmt" placeholder="₺ veya %" min="0" max="100" />
+              <button class="discount-apply" onclick="applyDiscount()">Uygula</button>
+              <button class="discount-remove" onclick="removeDiscount()">Kaldır</button>
+            </div>
+          </div>
+
+          <!-- PAYMENT -->
+          <div class="payment-section">
+            <div class="payment-label">Ödeme Yöntemi</div>
+            <div class="payment-methods">
+              <button class="pay-method active" data-method="Kart" onclick="selectPayMethod(this)">
+                <i class="fa-solid fa-credit-card"></i> Kart
+              </button>
+              <button class="pay-method" data-method="Nakit" onclick="selectPayMethod(this)">
+                <i class="fa-solid fa-money-bill-wave"></i> Nakit
+              </button>
+              <button class="pay-method" data-method="QR" onclick="selectPayMethod(this)">
+                <i class="fa-solid fa-qrcode"></i> QR
+              </button>
+            </div>
+            <button class="confirm-btn" id="confirmBtn" onclick="submitOrder()" disabled>
+              <i class="fa-solid fa-check"></i>
+              <span>Siparişi Onayla</span>
+              <span class="confirm-total" id="confirmTotal">₺0</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: TABLES ═══ -->
+    <div class="view" id="view-tables" style="display:none">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">Masa Yönetimi</div>
+          <div class="topbar-meta">Bir masaya tıklayarak POS'a geç</div>
+        </div>
+        <div class="topbar-right">
+          <div class="table-legend">
+            <span class="legend-dot dot-free"></span>Boş
+            <span class="legend-dot dot-occupied"></span>Dolu
+            <span class="legend-dot dot-waiting"></span>Hesap İstiyor
+          </div>
+        </div>
+      </header>
+      <div class="tables-body">
+        <div class="tables-zone">
+          <div class="zone-title"><i class="fa-solid fa-store"></i> İç Alan</div>
+          <div class="tables-grid" id="tablesInner"></div>
+        </div>
+        <div class="tables-zone">
+          <div class="zone-title"><i class="fa-solid fa-sun"></i> Teras</div>
+          <div class="tables-grid" id="tablesTerrace"></div>
+        </div>
+        <div class="tables-zone">
+          <div class="zone-title"><i class="fa-solid fa-couch"></i> Lounge</div>
+          <div class="tables-grid" id="tablesLounge"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: BARISTA ═══ -->
+    <div class="view" id="view-barista" style="display:none">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">Barista Ekranı</div>
+          <div class="topbar-meta" id="baristaQueueMeta">0 bekleyen sipariş</div>
+        </div>
+        <div class="topbar-right">
+          <div class="barista-status-row">
+            <span class="barista-status-dot"></span>
+            <span style="font-size:13px;color:var(--text2)">Canlı</span>
+          </div>
+        </div>
+      </header>
+      <div class="barista-body" id="baristaBody">
+        <div class="barista-columns">
+          <div class="barista-col">
+            <div class="barista-col-header pending"><i class="fa-solid fa-clock"></i> Bekliyor</div>
+            <div class="barista-queue" id="barista-pending"></div>
+          </div>
+          <div class="barista-col">
+            <div class="barista-col-header preparing"><i class="fa-solid fa-fire"></i> Hazırlanıyor</div>
+            <div class="barista-queue" id="barista-preparing"></div>
+          </div>
+          <div class="barista-col">
+            <div class="barista-col-header ready"><i class="fa-solid fa-bell-concierge"></i> Hazır</div>
+            <div class="barista-queue" id="barista-ready"></div>
+          </div>
+          <div class="barista-col">
+            <div class="barista-col-header delivered"><i class="fa-solid fa-circle-check"></i> Teslim Edildi</div>
+            <div class="barista-queue" id="barista-delivered"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: REPORTS ═══ -->
+    <div class="view" id="view-reports" style="display:none">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">Günlük Rapor</div>
+          <div class="topbar-meta" id="reportDate">—</div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-btn" onclick="exportReport()">
+            <i class="fa-solid fa-download"></i> Dışa Aktar
+          </button>
+        </div>
+      </header>
+      <div class="reports-body">
+
+        <!-- STAT CARDS -->
+        <div class="stat-cards" id="statCards">
+          <div class="stat-card">
+            <span class="stat-icon" style="background:#C8A96E18;color:#C8A96E"><i class="fa-solid fa-turkish-lira-sign"></i></span>
+            <div class="stat-info">
+              <span class="stat-label">Toplam Ciro</span>
+              <span class="stat-val" id="stat-revenue">₺0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon" style="background:#4CAF7A18;color:#4CAF7A"><i class="fa-solid fa-receipt"></i></span>
+            <div class="stat-info">
+              <span class="stat-label">Toplam Sipariş</span>
+              <span class="stat-val" id="stat-orders">0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon" style="background:#7C6ECA18;color:#9B8FE0"><i class="fa-solid fa-mug-hot"></i></span>
+            <div class="stat-info">
+              <span class="stat-label">Ortalama Sepet</span>
+              <span class="stat-val" id="stat-avg">₺0</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <span class="stat-icon" style="background:#E0557518;color:#E05575"><i class="fa-solid fa-fire"></i></span>
+            <div class="stat-info">
+              <span class="stat-label">En Çok Satan</span>
+              <span class="stat-val" id="stat-top">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CHARTS ROW -->
+        <div class="charts-row">
+          <div class="chart-card chart-big">
+            <div class="chart-header">
+              <span class="chart-title">Saatlik Satış</span>
+              <span class="chart-sub">Bugün</span>
+            </div>
+            <div class="bar-chart" id="hourlyChart"></div>
+          </div>
+          <div class="chart-card chart-small">
+            <div class="chart-header">
+              <span class="chart-title">Ödeme Dağılımı</span>
+            </div>
+            <div class="donut-wrap" id="donutChart"></div>
+          </div>
+        </div>
+
+        <!-- TOP ITEMS TABLE -->
+        <div class="chart-card" style="margin-top:20px">
+          <div class="chart-header">
+            <span class="chart-title">En Çok Satan Ürünler</span>
+          </div>
+          <table class="report-table" id="topItemsTable">
+            <thead>
+              <tr><th>#</th><th>Ürün</th><th>Adet</th><th>Ciro</th><th>Pay</th></tr>
+            </thead>
+            <tbody id="topItemsBody"></tbody>
+          </table>
+        </div>
+
+        <!-- ORDER HISTORY -->
+        <div class="chart-card" style="margin-top:20px">
+          <div class="chart-header">
+            <span class="chart-title">Sipariş Geçmişi</span>
+            <span class="chart-sub" id="historyCount">0 sipariş</span>
+          </div>
+          <div class="order-history" id="orderHistory">
+            <p style="color:var(--text3);font-size:14px;padding:20px 0">Henüz sipariş yok.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: MENU MANAGE ═══ -->
+    <div class="view" id="view-menu-manage" style="display:none">
+      <header class="topbar">
+        <div class="topbar-left">
+          <div class="topbar-title">Menü Yönetimi</div>
+          <div class="topbar-meta">Ürün ekle, düzenle veya devre dışı bırak</div>
+        </div>
+        <div class="topbar-right">
+          <button class="topbar-btn accent-btn" onclick="openAddProduct()">
+            <i class="fa-solid fa-plus"></i> Yeni Ürün
+          </button>
+        </div>
+      </header>
+      <div class="menu-manage-body">
+        <div class="mm-cat-list" id="mmCatList"></div>
+        <div class="mm-product-list" id="mmProductList"></div>
+      </div>
+    </div>
+
+  </div><!-- /app -->
+
+  <!-- ═══════════════════════════════════════════════
+       MODALS
+  ═══════════════════════════════════════════════ -->
+
+  <!-- SUCCESS MODAL -->
+  <div class="modal-overlay" id="successModal">
+    <div class="modal success-modal">
+      <div class="success-anim">
+        <div class="success-ring"></div>
+        <i class="fa-solid fa-check success-check"></i>
+      </div>
+      <h2 class="modal-title">Sipariş Alındı!</h2>
+      <p class="modal-sub">Hazırlık numaranız</p>
+      <div class="success-order-num" id="successOrderNum">#42</div>
+      <div class="success-details" id="successDetails"></div>
+      <button class="modal-btn accent" onclick="closeModal('successModal')">
+        <i class="fa-solid fa-plus"></i> Yeni Sipariş
+      </button>
+    </div>
+  </div>
+
+  <!-- ADD PRODUCT MODAL -->
+  <div class="modal-overlay" id="addProductModal">
+    <div class="modal add-product-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Yeni Ürün Ekle</h2>
+        <button class="modal-close" onclick="closeModal('addProductModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Ürün Adı</label>
+            <input type="text" class="form-input" id="newName" placeholder="Ör: Oat Latte" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Emoji</label>
+            <input type="text" class="form-input" id="newEmoji" placeholder="☕" maxlength="4" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Fiyat (₺)</label>
+            <input type="number" class="form-input" id="newPrice" placeholder="0" min="0" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kategori</label>
+            <select class="form-input" id="newCategory">
+              <option>Espresso Bazlı</option>
+              <option>Soğuk Kahve</option>
+              <option>Özel Tatlar</option>
+              <option>Çay & Alternatif</option>
+              <option>Atıştırmalık</option>
+              <option>Serinletici</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Açıklama</label>
+          <input type="text" class="form-input" id="newDesc" placeholder="Kısa ürün açıklaması" />
+        </div>
+        <div class="form-group" style="display:flex;align-items:center;gap:10px">
+          <label class="form-label" style="margin:0">Popüler Ürün</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="newPopular" />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeModal('addProductModal')">İptal</button>
+        <button class="modal-btn accent" onclick="saveNewProduct()">
+          <i class="fa-solid fa-plus"></i> Ürün Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast">
+    <span class="toast-dot"></span>
+    <span id="toastMsg">Eklendi</span>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
