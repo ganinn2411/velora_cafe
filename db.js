@@ -5,7 +5,6 @@
 
 "use strict";
 
-// 1. SİZİN FIREBASE BAĞLANTI BİLGİLERİNİZ
 const firebaseConfig = {
   apiKey: "AIzaSyD9mz3Ghi-T4__WRqElHjI3UTXpj229rEA",
   authDomain: "cafe-65746.firebaseapp.com",
@@ -16,7 +15,6 @@ const firebaseConfig = {
   measurementId: "G-GJCZQ3SK10"
 };
 
-// Firebase'i Başlat
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
@@ -33,7 +31,6 @@ const DB_KEYS = {
 
 let isFirebaseLoaded = false;
 
-// 2. ÇİFT YÖNLÜ VERİTABANI MOTORU (Hem yerel hem bulut)
 const DB = {
   get(key) {
     try {
@@ -44,8 +41,7 @@ const DB = {
   set(key, value) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
-      // Veriyi anında Firebase'e de yaz!
-      db.collection("aura_pos_data").doc(key).set({ data: JSON.stringify(value) });
+      db.collection("aura_pos_data").doc(key).set({ data: JSON.stringify(value) }).catch(err=>console.error(err));
       return true;
     } catch { return false; }
   },
@@ -55,32 +51,28 @@ const DB = {
   }
 };
 
-// 3. BULUTU SÜREKLİ DİNLEYEN SENKRONİZASYON RADARI
 function startFirebaseSync(onSyncComplete) {
   db.collection("aura_pos_data").onSnapshot((snapshot) => {
     if (snapshot.empty && !isFirebaseLoaded) {
-        // Firebase tamamen boşsa ilk kurulumu yap
         seedIfEmpty();
         isFirebaseLoaded = true;
         if (onSyncComplete) onSyncComplete();
     } else {
-        // Firebase'den gelen verileri sisteme al
         snapshot.forEach(doc => {
             localStorage.setItem(doc.id, doc.data().data);
         });
         
         if (!isFirebaseLoaded) {
             isFirebaseLoaded = true;
-            if (onSyncComplete) onSyncComplete(); // Açılışı tamamla
+            if (onSyncComplete) onSyncComplete(); 
         } else {
-            // Başka bir cihazdan sipariş veya güncelleme gelirse ekranı yenile!
             if (window.refreshUI) window.refreshUI();
         }
     }
   }, (error) => {
      console.error("Firebase Bağlantı Hatası:", error);
-     // İnternet kesilirse yerel verilerle çalışmaya devam et
      if (!isFirebaseLoaded) {
+         if (!localStorage.getItem(DB_KEYS.USERS)) seedIfEmpty();
          isFirebaseLoaded = true;
          if (onSyncComplete) onSyncComplete();
      }
@@ -114,10 +106,8 @@ function seedIfEmpty() {
 
     DB.set(DB_KEYS.SETTINGS, { kdv: 20, service: 0, footerText: "Bizi tercih ettiğiniz için teşekkür ederiz." });
     DB.set(DB_KEYS.ORDERS, []);
-    console.log("AURA POS: Firebase veritabanı kuruldu ve çekirdek veriler yüklendi.");
 }
 
-// ── VERİTABANI ARAYÜZLERİ ──
 const UserDB = {
   getAll() { return DB.get(DB_KEYS.USERS) || []; },
   save(users) { DB.set(DB_KEYS.USERS, users); },
