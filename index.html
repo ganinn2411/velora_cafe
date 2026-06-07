@@ -95,3 +95,158 @@
           <div class="topbar-time" id="topbarTime">00:00</div>
         </div>
       </header>
+
+      <div class="pos-container">
+        <div class="menu-section">
+          <div class="category-tabs" id="catTabs"></div>
+          <div class="products-grid-wrapper">
+            <div class="products-grid" id="productGrid"></div>
+          </div>
+        </div>
+
+        <div class="receipt-panel">
+          <div class="receipt-header">
+            <div>
+              <h2 class="receipt-title" id="cartTitle">Masa Adisyonu</h2>
+              <p class="receipt-subtitle" id="cartCount">0 ürün seçildi</p>
+            </div>
+            <button class="search-clear" onclick="clearActiveCart()" title="Sepeti Temizle">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+
+          <div class="receipt-items" id="cartItems">
+            <div class="empty-state">
+              <i class="fa-solid fa-basket-shopping" style="font-size:32px; color:var(--text3); margin-bottom:12px;"></i>
+              <p>Lütfen işlem yapmak için önce Masalar sekmesinden bir masa seçin.</p>
+            </div>
+          </div>
+
+          <div class="receipt-summary">
+            <div class="summary-line"><span>Ara Toplam</span><span id="subTotal">0.00 TL</span></div>
+            <div class="summary-line"><span>İndirim</span><span id="discountTotal">0.00 TL (%0)</span></div>
+            <div class="summary-line total"><span>Genel Toplam</span><span id="grandTotal">0.00 TL</span></div>
+            
+            <label class="form-label" style="margin-top:12px; margin-bottom:6px; font-size:11px;">Ödeme Yöntemi</label>
+            <div style="display:flex; gap:8px; margin-bottom:12px;">
+              <button class="modal-btn secondary" style="flex:1; justify-content:center;" id="pay-Kart" onclick="setPaymentMethod('Kart')">💳 Kredi Kartı</button>
+              <button class="modal-btn secondary" style="flex:1; justify-content:center;" id="pay-Nakit" onclick="setPaymentMethod('Nakit')">💵 Nakit Ödeme</button>
+            </div>
+
+            <div style="display:flex; gap:8px;">
+              <button class="modal-btn secondary" style="flex:1; justify-content:center;" onclick="applyDiscountPrompt()"><i class="fa-solid fa-percent"></i> İndirim</button>
+              <button class="modal-btn accent" style="flex:2; justify-content:center; font-weight:700;" onclick="checkoutOrder()"><i class="fa-solid fa-square-check"></i> Hesabı Kapat</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-tables" style="display:none">
+      <header class="topbar"><div class="topbar-title">Salon & Masa Düzeni</div></header>
+      <div style="padding:24px; overflow-y:auto; flex:1;">
+        <div class="dashboard-grid" style="grid-template-columns:1fr; gap:24px;">
+          <div class="stat-card" style="cursor:default; height:auto; padding:24px;">
+            <h3 class="lock-title" style="font-size:18px; text-align:left; margin-bottom:20px; color:var(--accent);">Aktif Masalar Durumu</h3>
+            <div class="products-grid" id="tablesGrid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-reports" style="display:none">
+      <header class="topbar"><div class="topbar-title">Yönetici Hasılat Raporları</div></header>
+      <div style="padding:24px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:20px;">
+        <div class="dashboard-grid">
+          <div class="stat-card">
+            <p class="stat-label">Günlük Ciro (Son 24 Saat)</p>
+            <h3 class="stat-value" id="reportDailyRevenue" style="color:var(--green)">0.00 TL</h3>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Haftalık Ciro (Son 7 Gün)</p>
+            <h3 class="stat-value" id="reportWeeklyRevenue" style="color:var(--accent)">0.00 TL</h3>
+          </div>
+          <div class="stat-card">
+            <p class="stat-label">Toplam Kapatılan Adisyon</p>
+            <h3 class="stat-value" id="reportTotalOrders">0</h3>
+          </div>
+        </div>
+        
+        <div class="stat-card" style="height:auto; padding:20px;">
+          <h4 style="color:var(--text); margin-bottom:15px; font-family:'Syne'; font-size:16px;">Son Tamamlanan Hesap Tahsilatları</h4>
+          <div id="reportOrderHistory" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view" id="view-menu-manage" style="display:none">
+      <header class="topbar">
+        <div class="topbar-title">Menü Listesi & Ürün Ayarları</div>
+        <button class="modal-btn accent" style="margin-left:auto; padding:8px 16px;" onclick="openAddProductModal()">
+          <i class="fa-solid fa-plus"></i> Yeni Ürün Ekle
+        </button>
+      </header>
+      <div style="padding:24px; overflow-y:auto; flex:1;">
+        <div class="products-grid" id="menuManageGrid"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="modal-overlay" id="addProductModal">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalTitle">Yeni Ürün Ekle</h3>
+        <button class="search-clear" onclick="closeModal('addProductModal')"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editProductId" />
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Emoji / Simge</label>
+            <input type="text" id="prodEmoji" class="form-input" placeholder="☕" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ürün Adı</label>
+            <input type="text" id="prodName" class="form-input" placeholder="Örn: Caramel Macchiato" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Fiyat (TL)</label>
+            <input type="number" id="prodPrice" class="form-input" placeholder="120" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Kategori</label>
+            <select id="prodCategory" class="form-input">
+              <option>Espresso Bazlı</option>
+              <option>Soğuk Kahve</option>
+              <option>Özel Tatlar</option>
+              <option>Çay & Alternatif</option>
+              <option>Atıştırmalık</option>
+              <option>Serinletici</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ürün Açıklaması</label>
+          <input type="text" id="prodDesc" class="form-input" placeholder="İçerik bilgisi veya not..." />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="modal-btn secondary" onclick="closeModal('addProductModal')">Vazgeç</button>
+        <button class="modal-btn accent" onclick="saveProduct()">Değişiklikleri Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">
+    <div class="toast-content">
+      <i class="fa-solid fa-circle-check" style="color:var(--accent)"></i>
+      <span id="toastMsg" style="margin-left:8px;">İşlem Başarılı</span>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
