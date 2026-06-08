@@ -352,6 +352,10 @@ select.form-input option { background:var(--bg3); }
       <button class="nav-btn" id="nav-settings" onclick="switchView('settings')">
         <i class="fa-solid fa-gear"></i><span class="nav-label">Ayarlar</span>
       </button>
+      <button class="settings-tab" id="stab-coupons" onclick="switchSettingsTab('coupons')">
+  <i class="fa-solid fa-ticket"></i> Kupon Yönetimi
+  <span class="tab-badge" id="couponCount">0</span>
+</button>
     </nav>
     <div class="sidebar-bottom">
       <div class="staff-pill">
@@ -366,7 +370,74 @@ select.form-input option { background:var(--bg3); }
       </button>
     </div>
   </aside>
+<div class="settings-page" id="spage-coupons">
+  <div>
+    <div class="settings-section-title">Kupon Yönetimi</div>
+    <div class="settings-section-desc">İndirim kuponları oluşturun, düzenleyin ve aktif/pasif yapın.</div>
+  </div>
 
+  <!-- KUPON EKLEME FORMU -->
+  <div class="settings-card">
+    <div class="settings-card-header">
+      <div class="settings-card-title"><i class="fa-solid fa-ticket"></i> Yeni Kupon Ekle</div>
+    </div>
+    <div class="modal-body" style="gap:14px;">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Kupon Kodu</label>
+          <input type="text" class="form-input" id="cpCode" placeholder="HOSGELDIN10"
+            style="text-transform:uppercase;letter-spacing:1px;font-family:'Syne',sans-serif;font-weight:700"
+            oninput="this.value=this.value.toUpperCase()" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">İndirim Türü</label>
+          <select class="form-input" id="cpType">
+            <option value="percent">Yüzde (%)</option>
+            <option value="fixed">Sabit Tutar (₺)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">İndirim Değeri</label>
+          <input type="number" class="form-input" id="cpValue" placeholder="10" min="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Min. Sipariş (₺)</label>
+          <input type="number" class="form-input" id="cpMin" placeholder="0" min="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Kullanım Limiti</label>
+          <input type="number" class="form-input" id="cpLimit" placeholder="sınırsız" min="1" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Açıklama (İsteğe Bağlı)</label>
+          <input type="text" class="form-input" id="cpDesc" placeholder="Hoş geldin indirimi" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Son Kullanma Tarihi</label>
+          <input type="date" class="form-input" id="cpExpiry" />
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;">
+        <button class="modal-btn accent" onclick="addCoupon()">
+          <i class="fa-solid fa-plus"></i> Kupon Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KUPON LİSTESİ -->
+  <div class="settings-card">
+    <div class="settings-card-header">
+      <div class="settings-card-title"><i class="fa-solid fa-list"></i> Mevcut Kuponlar</div>
+      <span id="couponCountBadge" style="font-size:11px;background:var(--accent-bg);color:var(--accent);padding:3px 10px;border-radius:8px;border:1px solid var(--accent-bd);">0 kupon</span>
+    </div>
+    <div id="couponList" style="padding:6px 12px;"></div>
+  </div>
+</div>
   <!-- ═══ POS VIEW ═══ -->
   <div class="view" id="view-pos">
     <header class="topbar">
