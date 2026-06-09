@@ -1159,6 +1159,14 @@ function login(u){
   document.getElementById("staffPillAvatar").textContent=u.avatar;
   document.getElementById("staffPillName").textContent=u.name.split(" ")[1]||u.name;
   document.getElementById("staffPillRole").textContent=u.role==="admin"?"Müdür":"Barista";
+
+  // Rol bazlı nav görünürlüğü
+  const adminOnly=["nav-barista","nav-reports","nav-menu","nav-coupons","nav-settings"];
+  adminOnly.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.style.display=u.role==="admin"?"flex":"none";
+  });
+
   switchView("pos");
 }
 function logout(){
@@ -1175,6 +1183,11 @@ function toggleForgotHelp(){const el=document.getElementById("forgotHelp");el.st
    VIEW SWITCHING
 ════════════════════════════════════════════════════ */
 function switchView(v){
+  // Barista sadece pos ve tables görebilir
+  if(currentUser && currentUser.role!=="admin" && !["pos","tables"].includes(v)){
+    showToast("Bu alana erişim yetkiniz yok.");
+    return;
+  }
   ["pos","tables","barista","reports","menu","coupons","settings"].forEach(name=>{
     document.getElementById("view-"+name).style.display=name===v?"flex":"none";
     const nb=document.getElementById("nav-"+name);if(nb) nb.classList.toggle("active",name===v);
