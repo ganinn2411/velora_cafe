@@ -525,34 +525,48 @@ select.cp-input option{background:var(--bg2);}
 <body>
 
 <!-- ── LOCK SCREEN ──────────────────────────────────── -->
-<div class="lock-screen" id="lockScreen">
-  <div class="lock-bg-orb lock-orb1"></div>
-  <div class="lock-bg-orb lock-orb2"></div>
-  <div class="lock-card" id="lockCard">
-    <div class="lock-logo"><span class="lock-logo-letter">A</span></div>
-    <div class="lock-title">AURA</div>
-    <div class="lock-subtitle">Coffee & Kitchen POS</div>
-    <div class="lock-staff-label">Personel Seçin</div>
-    <div class="lock-staff-grid" id="staffGrid"></div>
-  </div>
-  <div class="pin-card" id="pinCard" style="display:none">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-      <button onclick="backToStaff()" class="pin-back" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;"><i class="fa-solid fa-arrow-left"></i></button>
-      <div style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;" id="pinName"></div>
+<div class="lock-card" id="lockCard">
+  <div class="lock-logo"><span class="lock-logo-letter">A</span></div>
+  <div class="lock-title">AURA</div>
+  <div class="lock-subtitle">Coffee & Kitchen POS</div>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:10px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;">Kullanıcı Adı</label>
+      <input type="text" id="loginName" class="form-input" placeholder="Adınızı girin..."
+        style="background:var(--bg3);border:var(--border2);border-radius:var(--r);padding:11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;width:100%;transition:var(--transition);"
+        onfocus="this.style.borderColor='rgba(200,169,110,.4)'" onblur="this.style.borderColor=''"
+        onkeydown="if(event.key==='Enter')document.getElementById('loginPass').focus()">
     </div>
-    <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">PIN Giriniz</div>
-    <div class="pin-dots" id="pinDots">
-      <div class="pin-dot" id="d0"></div><div class="pin-dot" id="d1"></div>
-      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:10px;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;font-weight:600;">Şifre</label>
+      <div style="position:relative;">
+        <input type="password" id="loginPass" class="form-input" placeholder="••••"
+          style="background:var(--bg3);border:var(--border2);border-radius:var(--r);padding:11px 40px 11px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;width:100%;transition:var(--transition);"
+          onfocus="this.style.borderColor='rgba(200,169,110,.4)'" onblur="this.style.borderColor=''"
+          onkeydown="if(event.key==='Enter')doLogin()">
+        <button onclick="togglePassVis()" id="passVisBtn"
+          style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:2px;display:flex;align-items:center;">
+          <i class="fa-regular fa-eye" id="passVisIcon"></i>
+        </button>
+      </div>
     </div>
-    <div class="pin-error" id="pinError" style="display:none">Hatalı PIN, tekrar deneyin.</div>
-    <div class="pin-grid" id="pinGrid"></div>
-    <button onclick="toggleForgotHelp()" style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;margin-top:14px;font-family:'DM Sans',sans-serif;">PİN'i mi unuttunuz?</button>
-    <div id="forgotHelp" style="display:none;margin-top:8px;font-size:11px;color:var(--text3);background:var(--bg3);padding:10px 14px;border-radius:var(--r);text-align:left;line-height:1.6;">
-      Kerem (Müdür): <b style="color:var(--accent)">1234</b><br>
-      Efe (Barista): <b style="color:var(--accent)">2222</b><br>
-      Selin (Kasiyer): <b style="color:var(--accent)">3333</b><br>
-      Ayşe (Barista): <b style="color:var(--accent)">4444</b>
+    <div id="loginError" style="display:none;color:var(--red);font-size:12px;padding:8px 12px;background:var(--red-bg);border-radius:var(--r-sm);text-align:center;">
+      Kullanıcı adı veya şifre hatalı.
+    </div>
+    <button onclick="doLogin()"
+      style="width:100%;background:var(--accent);border:none;border-radius:var(--r);color:#080808;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;padding:13px;cursor:pointer;margin-top:4px;transition:var(--transition);"
+      onmouseover="this.style.background='var(--accent2)'" onmouseout="this.style.background='var(--accent)'">
+      Giriş Yap
+    </button>
+    <button onclick="toggleForgotHelp()"
+      style="background:none;border:none;color:var(--text3);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:2px;">
+      Şifremi unuttum
+    </button>
+    <div id="forgotHelp" style="display:none;font-size:11px;color:var(--text3);background:var(--bg3);padding:10px 14px;border-radius:var(--r);text-align:left;line-height:1.8;">
+      Kerem → <b style="color:var(--accent)">1234</b><br>
+      Efe → <b style="color:var(--accent)">2222</b><br>
+      Selin → <b style="color:var(--accent)">3333</b><br>
+      Ayşe → <b style="color:var(--accent)">4444</b>
     </div>
   </div>
 </div>
@@ -1098,14 +1112,43 @@ function updateClock(){
    LOCK SCREEN
 ════════════════════════════════════════════════════ */
 function renderLockScreen(){
-  const grid=document.getElementById("staffGrid");
-  const colors={admin:"#4CAF7A",barista:"#C8A96E"};
-  grid.innerHTML=UserDB.getAll().filter(u=>u.active).map(u=>`
-    <button class="staff-btn" onclick="selectStaff('${u.id}')">
-      <div class="staff-avatar" style="background:${u.color}22;color:${u.color}">${u.avatar}</div>
-      <span>${u.name}</span>
-      <span style="font-size:10px;color:var(--text3)">${u.role==="admin"?"Müdür":"Barista"}</span>
-    </button>`).join("");
+  document.getElementById("loginName").value="";
+  document.getElementById("loginPass").value="";
+  document.getElementById("loginError").style.display="none";
+  document.getElementById("forgotHelp").style.display="none";
+  setTimeout(()=>document.getElementById("loginName").focus(),100);
+}
+   function doLogin(){
+  const nameInput=document.getElementById("loginName").value.trim().toLowerCase();
+  const passInput=document.getElementById("loginPass").value.trim();
+  const err=document.getElementById("loginError");
+  if(!nameInput||!passInput){err.style.display="block";err.textContent="Lütfen tüm alanları doldurun.";return;}
+  // İsim eşleştirmesi: kullanıcı adının herhangi bir parçasıyla (küçük harf) eşleş
+  const u=UserDB.getAll().find(u=>
+    u.active!==false &&
+    u.name.toLowerCase().split(" ").some(part=>part===nameInput) &&
+    u.pin===passInput
+  );
+  if(u){err.style.display="none";login(u);}
+  else{
+    err.style.display="block";err.textContent="Kullanıcı adı veya şifre hatalı.";
+    document.getElementById("loginPass").value="";
+    document.getElementById("loginPass").focus();
+    document.getElementById("lockCard").style.animation="shake .4s ease";
+    setTimeout(()=>{document.getElementById("lockCard").style.animation="";},400);
+  }
+}
+
+function togglePassVis(){
+  const inp=document.getElementById("loginPass");
+  const icon=document.getElementById("passVisIcon");
+  if(inp.type==="password"){inp.type="text";icon.className="fa-regular fa-eye-slash";}
+  else{inp.type="password";icon.className="fa-regular fa-eye";}
+}
+
+function toggleForgotHelp(){
+  const el=document.getElementById("forgotHelp");
+  el.style.display=el.style.display==="none"?"block":"none";
 }
 function selectStaff(id){
   selectedUserId=id;pinBuffer="";
@@ -1173,8 +1216,6 @@ function logout(){
   SessionDB.clear();currentUser=null;cart=[];selectedTable=null;appliedCoupon=null;
   document.getElementById("appShell").style.display="none";
   document.getElementById("lockScreen").style.display="flex";
-  document.getElementById("lockCard").style.display="block";
-  document.getElementById("pinCard").style.display="none";
   renderLockScreen();
 }
 function toggleForgotHelp(){const el=document.getElementById("forgotHelp");el.style.display=el.style.display==="none"?"block":"none";}
