@@ -32,7 +32,7 @@ function seedIfEmpty() {
     DB.set(DB_KEYS.USERS, [
       { id:"u1", name:"Müdür Kerem",   role:"admin",   pin:"1234", avatar:"K", color:"#4CAF7A", active:true },
       { id:"u2", name:"Barista Efe",   role:"barista", pin:"2222", avatar:"E", color:"#C8A96E", active:true },
-      { id:"u3", name:"Kasiyer Selin", role:"barista", pin:"3333", avatar:"S", color:"#9B8FE0", active:true },
+      { id:"u3", name:"Garson Selin",  role:"waiter",  pin:"3333", avatar:"S", color:"#9B8FE0", active:true },
       { id:"u4", name:"Barista Ayşe",  role:"barista", pin:"4444", avatar:"A", color:"#E05575", active:true },
     ]);
   }
@@ -74,17 +74,24 @@ function seedIfEmpty() {
   if (!DB.get(DB_KEYS.TABLES)) {
     const tables = [];
     for (let i = 1; i <= 8; i++)
-      tables.push({ id:`I${i}`, num:i, zone:"İç Alan", cap:i%3===0?6:i%2===0?4:2, status:"free", activeOrderId:null });
+      tables.push({ id:`I${i}`, num:i, zone:"İç Alan", cap:i%3===0?6:i%2===0?4:2, status:"free" });
     for (let i = 1; i <= 5; i++)
-      tables.push({ id:`T${i}`, num:`T${i}`, zone:"Teras", cap:4, status:"free", activeOrderId:null });
+      tables.push({ id:`T${i}`, num:`T${i}`, zone:"Teras", cap:4, status:"free" });
     for (let i = 1; i <= 3; i++)
-      tables.push({ id:`L${i}`, num:`L${i}`, zone:"Lounge", cap:i===2?8:6, status:"free", activeOrderId:null });
+      tables.push({ id:`L${i}`, num:`L${i}`, zone:"Lounge", cap:i===2?8:6, status:"free" });
     DB.set(DB_KEYS.TABLES, tables);
   }
 
   if (!DB.get(DB_KEYS.ORDERS))   DB.set(DB_KEYS.ORDERS, []);
   if (!DB.get(DB_KEYS.COUPONS))  DB.set(DB_KEYS.COUPONS, []);
-  if (!DB.get(DB_KEYS.SETTINGS)) DB.set(DB_KEYS.SETTINGS, { orderCounter:40, taxRate:8 });
+  // Settings yoksa oluştur; varsa orderCounter'ı her zaman 0'dan başlat
+  const _s = DB.get(DB_KEYS.SETTINGS);
+  if (!_s) {
+    DB.set(DB_KEYS.SETTINGS, { orderCounter:0, taxRate:8 });
+  } else {
+    _s.orderCounter = 0;
+    DB.set(DB_KEYS.SETTINGS, _s);
+  }
 }
 
 /* ── USER DB ──────────────────────────────────── */
@@ -158,8 +165,12 @@ const OrderDB = {
     const idx = all.findIndex(o => o.id === id);
     if (idx >= 0) { all[idx] = { ...all[idx], ...changes }; this.save(all); }
   },
+  /* Bir masaya ait, henüz ödenmemiş (açık hesap) siparişler */
+  getOpenByTable(tableId) {
+    return this.getAll().filter(o => o.tableId === tableId && !o.paid);
+  },
   nextCounter() {
-    const s = DB.get(DB_KEYS.SETTINGS) || { orderCounter:40 };
+    const s = DB.get(DB_KEYS.SETTINGS) || { orderCounter:0 };
     s.orderCounter++;
     DB.set(DB_KEYS.SETTINGS, s);
     return s.orderCounter;
@@ -191,7 +202,7 @@ const CouponDB = {
 
 /* ── SETTINGS DB ──────────────────────────────── */
 const SettingsDB = {
-  get()        { return DB.get(DB_KEYS.SETTINGS) || { orderCounter:40, taxRate:8 }; },
+  get()        { return DB.get(DB_KEYS.SETTINGS) || { orderCounter:0, taxRate:8 }; },
   save(s)      { DB.set(DB_KEYS.SETTINGS, s); },
   getTaxRate() { return this.get().taxRate || 8; },
 };
